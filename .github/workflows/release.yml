@@ -31,16 +31,13 @@ jobs:
       - name: authenticate to google cloud
         id: "auth"
         uses: google-github-actions/auth@v1
-        #with:
-        #  workload_identity_provider: "projects/373404056287/locations/global/workloadIdentityPools/my-pool2/providers/my-provider3"
-        #  service_account: "tk-766@cabana-dev-388204.iam.gserviceaccount.com"
         with:
           credentials_json: "${{secrets.GCP_KEY}} | base64 -d"
 
       - name: "Set up Cloud SDK"
         uses: "google-github-actions/setup-gcloud@v1"
         with:
-          project_id: "galatea-396601cabana-dev-388204"
+          project_id: "galatea-396601"
 
       - name: "Docker auth"
         run: gcloud auth configure-docker australia-southeast1-docker.pkg.dev
@@ -49,7 +46,7 @@ jobs:
         with:
           cluster_name: galatea-396601-gke
           location: australia-southeast1-a
-          credentials: ${{ secrets.GKE_SA_KEY }}
+          credentials: ${{secrets.GCP_KEY}} | base64 -d
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
