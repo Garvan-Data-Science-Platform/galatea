@@ -1,0 +1,102 @@
+name: prod release
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: "read"
+  id-token: "write"
+
+#Based on https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions
+#and https://cloud.google.com/blog/products/devops-sre/using-github-actions-with-google-cloud-deploy
+
+jobs:
+  docker:
+    runs-on:
+      group: "Cabana-CICD"
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      #This step is for checking which files have changed
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend'
+            backend:
+              - 'backend'
+
+      - name: authenticate to google cloud
+        id: "auth"
+        uses: google-github-actions/auth@v1
+        #with:
+        #  workload_identity_provider: "projects/373404056287/locations/global/workloadIdentityPools/my-pool2/providers/my-provider3"
+        #  service_account: "tk-766@cabana-dev-388204.iam.gserviceaccount.com"
+        with:
+          credentials_json: "${{secrets.GCP_KEY}} | base64 -d"
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+        with:
+          project_id: "galatea-396601cabana-dev-388204"
+
+      - name: "Docker auth"
+        run: gcloud auth configure-docker australia-southeast1-docker.pkg.dev
+
+      - uses: google-github-actions/get-gke-credentials@db150f2cc60d1716e61922b832eae71d2a45938f
+        with:
+          cluster_name: galatea-396601-gke
+          location: australia-southeast1-a
+          credentials: ${{ secrets.GKE_SA_KEY }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Set up creds
+        run: |
+          mkdir /tmp/secret-volume
+          echo "${{ secrets.GCP_KEY }}" | base64 -d > /tmp/secret-volume/cabana-dev-388204-ae3495fa8567.json
+        shell: bash
+
+      - uses: isbang/compose-action@v1.4.1
+        with:
+          compose-file: ".github/docker-compose.ci.yml"
+          up-flags: "--build"
+        env:
+          OAUTH_CLIENT_ID: ${{secrets.OAUTH_CLIENT_ID}}
+          OAUTH_SECRET: ${{secrets.OAUTH_SECRET}}
+
+      - name: Run tests
+        run: |
+          mkdir /tmp/cypress; mkdir /tmp/cypress/videos; mkdir /tmp/logs
+          docker build . -f .github/Dockerfile.tests -t tests
+          docker run --network docker_default -v /tmp/cypress/videos:/cypress/videos tests
+
+      - name: Print logs
+        if: always()
+        run: docker-compose -f .github/docker-compose.ci.yml logs
+
+      - name: Build and push Docker image - api
+        if: steps.filter.outputs.web == 'true'
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:latest
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      #Based on https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-google-kubernetes-engine
+      - name: Deploy
+        run: |-
+          kubectl rollout restart deployment/web
+          kubectl rollout restart deployment/worker
+          kubectl rollout restart deployment/dash
+
+        #  kubectl set image deployment/web web australia-southeast1-docker.pkg.dev/cabana-dev-388204/cabana/web:${{ github.event.workflow_run.head_sha }}

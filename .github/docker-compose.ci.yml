@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  frontend:
+    build:
+      context: ../frontend
+    ports:
+      - 5173:5173
+
+  backend:
+    depends_on:
+      - db
+    build:
+      context: ../backend
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=test_db
+      - DB_USER=test_user
+      - DB_PASSWORD=test_password
+      - DB_HOST=db
+      - DB_PORT=5432
+    ports:
+      - 8000:8000
+    volumes:
+      - /tmp/secret-volume:/etc/secret-volume
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_DB=test_db

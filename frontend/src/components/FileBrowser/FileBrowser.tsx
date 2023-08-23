@@ -6,15 +6,11 @@ import { Subdirectory, BucketFile } from "./Subdirectory";
 
 interface FileBrowserProps {
   bucket: string;
-  onSelectFile: (filepath: string) => void;
+  onSelectFile: (filepath: BucketFile) => void;
 }
 
 function FileBrowser(props: FileBrowserProps) {
   const { isAuthenticated } = useAuth0();
-
-  const onSelectFile = (file: BucketFile) => {
-    console.log("SELECTED", file);
-  };
 
   if (!isAuthenticated) {
     return <p>Not logged in.</p>;
@@ -33,7 +29,7 @@ function FileBrowser(props: FileBrowserProps) {
       <Subdirectory
         bucket={props.bucket}
         level={1}
-        onSelectFile={onSelectFile}
+        onSelectFile={props.onSelectFile}
       />
     </List>
   );
