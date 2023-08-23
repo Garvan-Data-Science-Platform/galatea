@@ -91,6 +91,9 @@ jobs:
       #Based on https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-google-kubernetes-engine
       - name: Deploy
         run: |-
+          yarn --cwd frontend install
+          yarn --cwd frontend build
+          gsutil -m rsync -r -c -d frontend/dist gs://galatea-static-website-bucket/
           kubectl rollout restart deployment/api
 
         #  kubectl set image deployment/web web australia-southeast1-docker.pkg.dev/cabana-dev-388204/cabana/web:${{ github.event.workflow_run.head_sha }}
