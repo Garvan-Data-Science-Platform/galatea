@@ -13,9 +13,8 @@ permissions:
 #and https://cloud.google.com/blog/products/devops-sre/using-github-actions-with-google-cloud-deploy
 
 jobs:
-  build:
-    runs-on:
-      group: "Cabana-CICD"
+  build_and_test:
+    runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v3
