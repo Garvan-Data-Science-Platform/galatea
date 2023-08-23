@@ -76,11 +76,11 @@ jobs:
         run: docker-compose -f .github/docker-compose.ci.yml logs
 
       - name: Build and push Docker image - api
-        if: steps.filter.outputs.web == 'true'
+        if: steps.filter.outputs.backend == 'true'
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./frontend/Dockerfile
+          file: ./backend/Dockerfile
           push: true
           tags: |
             australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:latest
@@ -91,8 +91,6 @@ jobs:
       #Based on https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-google-kubernetes-engine
       - name: Deploy
         run: |-
-          kubectl rollout restart deployment/web
-          kubectl rollout restart deployment/worker
-          kubectl rollout restart deployment/dash
+          kubectl rollout restart deployment/api
 
         #  kubectl set image deployment/web web australia-southeast1-docker.pkg.dev/cabana-dev-388204/cabana/web:${{ github.event.workflow_run.head_sha }}
