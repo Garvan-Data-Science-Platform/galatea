@@ -62,8 +62,8 @@ jobs:
           compose-file: ".github/docker-compose.ci.yml"
           up-flags: "--build"
         env:
-          OAUTH_CLIENT_ID: ${{secrets.OAUTH_CLIENT_ID}}
-          OAUTH_SECRET: ${{secrets.OAUTH_SECRET}}
+          AUTH0_DOMAIN: ${{secrets.AUTH0_DOMAIN}}
+          AUTH0_AUDIENCE: ${{secrets.AUTH0_AUDIENCE}}
 
       - name: Run tests
         run: |
