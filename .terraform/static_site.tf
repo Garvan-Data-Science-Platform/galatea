@@ -26,6 +26,9 @@ resource "google_storage_bucket_object" "indexpage" {
   content      = "<html><body>Hello World!</body></html>"
   content_type = "text/html"
   bucket       = google_storage_bucket.static-site.id
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 resource "google_compute_backend_bucket" "lb_backend" {
