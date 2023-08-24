@@ -49,7 +49,7 @@ const Home = () => {
           }}
         />
 
-        <div style={{ width: 600, height: 600 }}>
+        <div style={{ width: 600, height: 600, backgroundColor: "#c9c5c5" }}>
           <canvas width={600} height={600} ref={canvasRef} />
           <img
             width={600}

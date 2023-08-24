@@ -24,9 +24,9 @@ jobs:
         with:
           filters: |
             frontend:
-              - 'frontend'
+              - 'frontend/**'
             backend:
-              - 'backend'
+              - 'backend/**'
 
       - name: authenticate to google cloud
         id: "auth"
