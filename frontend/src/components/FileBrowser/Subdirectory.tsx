@@ -8,6 +8,7 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Folder, InsertDriveFile } from "@mui/icons-material";
+import { loadBucketDirectory } from "requests/bucket";
 
 interface DirectoryI {
   name: string;
@@ -48,24 +49,29 @@ export function Subdirectory(props: SubdirectoryProps) {
 
   const load = async () => {
     let token = await getAccessTokenSilently();
-    let headers = { Authorization: `Bearer ${token}` };
-    var url = `http://localhost:8000/api/bucket/${props.bucket}?limit=50`;
+
+    var subdir;
 
     if (props.level > 1) {
-      var subdir;
       if (props.level == 2) {
         subdir = props.name || "";
       } else {
         subdir = props.parent + "/" + (props.name || "");
       }
-      url = url.concat("&subdir=", subdir);
+    }
+    var files, folders;
+    try {
+      [files, folders] = await loadBucketDirectory(token, {
+        bucket: props.bucket,
+        subdir: subdir,
+        limit: 50,
+      });
+    } catch (e) {
+      alert(e);
+      return;
     }
 
-    let res = await fetch(url, { headers });
-    let dat = await res.json();
-
-    let files = dat.files;
-    let subdirs = dat.folders.map((f: string): DirectoryI => {
+    let subdirs = folders.map((f: string): DirectoryI => {
       var parent = "";
       if (props.level == 2) {
         parent = props.name || "";
