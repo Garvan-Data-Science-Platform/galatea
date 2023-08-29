@@ -30,6 +30,11 @@ def list_bucket(request, bucket: str, subdir: str | None = None, limit: int | No
     return {"files": files, "folders": folders}
 
 
+@api.get('/')
+def health_check(request):
+    return {"status": "ok"}
+
+
 @api.exception_handler(AuthenticationError)
 def service_unavailable(request, exc: AuthenticationError):
     exc.args

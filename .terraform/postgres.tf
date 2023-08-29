@@ -65,7 +65,7 @@ resource "kubernetes_deployment" "postgres" {
       }
       spec {
         container {
-          image = "postgres:10.3"
+          image = "postgres:15"
           name  = "postgres"
           port {
             container_port = 5432

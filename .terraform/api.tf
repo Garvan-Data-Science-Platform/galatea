@@ -34,6 +34,9 @@ resource "kubernetes_deployment" "api" {
           port {
             container_port = 8000
           }
+          security_context {
+            privileged = true #Needed for gcsfuse
+          }
           env {
             name = "DB_USER"
             value = "pg-user"
