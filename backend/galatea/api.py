@@ -35,6 +35,18 @@ def health_check(request):
     return {"status": "ok"}
 
 
+@api.get('/slice/{idx}')
+def test_slice(request, idx: int):
+    import time
+    import numpy as np
+    t1 = time.time()
+    d1 = np.memmap('/app/bucket/dat.npy', np.int8, 'r', shape=(40, 512, 512, 132))
+    res = d1[idx, :, :, :].sum()
+    t2 = time.time()
+
+    return {"sum": int(res), "time": t2-t1}
+
+
 @api.exception_handler(AuthenticationError)
 def service_unavailable(request, exc: AuthenticationError):
     exc.args
