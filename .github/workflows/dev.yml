@@ -39,7 +39,7 @@ jobs:
       - name: Set up creds
         run: |
           mkdir /tmp/secret-volume
-          echo "${{ secrets.GCP_KEY }}" | base64 -d > /tmp/secret-volume/cabana-dev-388204-ae3495fa8567.json
+          echo "${{ secrets.GCP_KEY }}" | base64 -d > /tmp/secret-volume/sa-dev.json
         shell: bash
 
       - uses: isbang/compose-action@v1.4.1

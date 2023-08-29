@@ -9,7 +9,7 @@ import datetime
 api = NinjaAPI()
 
 storage_client = storage.Client.from_service_account_json(
-    "/etc/secret-volume/cabana-dev-388204-ae3495fa8567.json")
+    "/etc/secret-volume/sa-key.json")
 
 
 @api.get("/bucket/{bucket}/", response=BucketFileList, auth=AuthBearer())

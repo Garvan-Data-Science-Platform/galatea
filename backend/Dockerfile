@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install curl lsb-release gnupg2 -y && \
     apt-get update && \
     apt-get install gcsfuse -y
 
-COPY galatea-key.json .
+#COPY galatea-key.json .
 
 COPY requirements.txt .
 
