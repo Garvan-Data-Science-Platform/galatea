@@ -23,7 +23,7 @@ import { mount } from "cypress/react18";
 
 import { Provider } from "react-redux";
 
-import { store } from "../../src/redux/store";
+import { store } from "../../src/state/store";
 
 // Augment the Cypress namespace to include type definitions for
 // your custom command.
