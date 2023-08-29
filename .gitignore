@@ -134,3 +134,8 @@ __pycache__
 
 .terraform/.terraform
 .terraform.lock.hcl
+
+working.py
+*.npy
+tmp
+galatea-key.json

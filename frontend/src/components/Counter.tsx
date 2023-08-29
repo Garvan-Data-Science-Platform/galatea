@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useAppSelector, useAppDispatch } from "../redux/hooks";
+import { useAppSelector, useAppDispatch } from "../state/hooks";
 import {
   decrement,
   increment,
@@ -8,7 +8,7 @@ import {
   incrementAsync,
   incrementIfOdd,
   selectCount,
-} from "../redux/slices/counterSlice";
+} from "../state/slices/counterSlice";
 
 //THIS IS A SAMPLE TO SHOW USE OF REDUX STORE
 

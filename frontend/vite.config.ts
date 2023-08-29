@@ -14,6 +14,7 @@ export default defineConfig({
     alias: {
       components: "/src/components",
       requests: "/src/requests",
+      state: "/src/state",
     },
   },
 });

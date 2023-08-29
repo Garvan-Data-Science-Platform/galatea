@@ -5,7 +5,7 @@ import ProfilePage from "./pages/profile";
 import HomePage from "./pages/home";
 import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import { Provider } from "react-redux";
-import { store } from "./redux/store.ts";
+import { store } from "./state/store.ts";
 import React from "react";
 
 function App() {
