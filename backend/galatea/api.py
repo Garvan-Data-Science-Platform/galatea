@@ -7,11 +7,20 @@ from .schemas import BucketFileList
 from typing import List
 import datetime
 from django.http import HttpResponse
+from django.utils.cache import patch_cache_control
+import numpy as np
+from PIL import Image
+from django.conf import settings
 
 api = NinjaAPI()
 
 storage_client = storage.Client.from_service_account_json(
     "/etc/secret-volume/sa-key.json")
+
+flim_ds = '/app/bucket/test_flim.npy'
+
+if settings.DEBUG:
+    flim_ds = '/home/tim/projects/galatea/working/test_flim.npy'
 
 
 @api.get("/bucket/{bucket}/", response=BucketFileList, auth=AuthBearer())
@@ -51,19 +60,26 @@ def test_slice(request, idx: int):
 
 @api.get('/frame/{idx}')
 def test_frame(request, idx: int):
-    import numpy as np
-    from PIL import Image
-    d1 = np.memmap('/app/bucket/test_flim.npy', np.int8, 'r', shape=(512, 512, 3, 20, 133))
+    d1 = np.memmap(flim_ds, np.int8, 'r', shape=(512, 512, 3, 20, 133))
     dat = np.clip(100*d1[:, :, :, idx, :].sum(axis=-1), 0, 255).astype(np.uint8)
     img = Image.fromarray(dat, "RGB")
     return serve_pil_image(img)
+
+
+@api.get('/ts/{frame}/{x}/{y}')
+def timeseries(request, frame: int, x: int, y: int):
+    d1 = np.memmap(flim_ds, np.int8, 'r', shape=(512, 512, 3, 20, 133))
+    dat = [int(i) for i in d1[y, x, :, frame, :].sum(axis=0)]
+    return {'data': dat}
 
 
 def serve_pil_image(pil_img):
     img_io = BytesIO()
     pil_img.save(img_io, 'JPEG', quality=70)
     img_io.seek(0)
-    return HttpResponse(img_io)
+    res = HttpResponse(img_io)
+    patch_cache_control(res, max_age=3600)
+    return res
 
 
 @api.exception_handler(AuthenticationError)

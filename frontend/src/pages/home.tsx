@@ -4,17 +4,22 @@ import { ImageCanvas } from "components/ImageCanvas";
 import { Slider } from "@mui/material";
 import { useAppDispatch } from "state/hooks";
 import { setSrc } from "state/slices/imageSlice";
+import Chart from "chart.js/auto";
+import { Histogram } from "components/Histogram";
+import { setChartFrame } from "state/slices/chartSlice";
 
 const Home = () => {
   const dispatch = useAppDispatch();
 
   const onSliderChange = (e, val) => {
     console.log("SETTING SOURCE", val);
-    dispatch(setSrc(`https://api.galatea.dsp.garvan.org.au/frame/${val}`));
+    dispatch(setSrc(`${import.meta.env.VITE_BACKEND_URL}/frame/${val}`));
+    dispatch(setChartFrame(val));
   };
 
   return (
     <>
+      {/*
       <div
         style={{
           width: 1200,
@@ -24,29 +29,39 @@ const Home = () => {
           display: "flex",
         }}
       >
-        <FileBrowser
+       
+                  <FileBrowser
           bucket="cabana-dev"
           onSelectFile={(file) => {
             console.log("Setting image to", file.url);
             //setCurrentImg(file.url);
           }}
         />
-        <ImageCanvas />
-      </div>
+          */}
+
+      <ImageCanvas />
+      {
+        //</div>}
+      }
+
       <Slider
-        defaultValue={0}
+        defaultValue={2}
         aria-label="Default"
         valueLabelDisplay="auto"
         step={1}
         marks
-        min={0}
+        min={2}
         max={19}
         style={{ width: 500 }}
         onChangeCommitted={onSliderChange}
       />
+      <p>Click image to see chart data at pixel</p>
       <div>
+        {/*
         <LoginButton />
+        */}
       </div>
+      <Histogram />
     </>
   );
 };
