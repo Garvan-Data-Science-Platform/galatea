@@ -9,15 +9,10 @@ export function ImageCanvas() {
   const imageRef = React.useRef<HTMLImageElement>(null);
 
   const imageSrc = useAppSelector(selectImageSrc);
-  const dispatch = useAppDispatch();
 
   React.useEffect(() => {
-    dispatch(
-      setSrc(
-        "https://www.leica-microsystems.com/fileadmin/_processed_/1/e/csm_what-is-flim_018b56038a.jpg"
-      )
-    );
-  }, []);
+    setLoaded(false);
+  }, [imageSrc]);
 
   React.useEffect(() => {
     if (loaded) {
