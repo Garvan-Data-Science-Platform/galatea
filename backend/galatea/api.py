@@ -1,3 +1,4 @@
+from io import BytesIO
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError
 from google.cloud import storage
@@ -5,6 +6,7 @@ from .auth import AuthBearer
 from .schemas import BucketFileList
 from typing import List
 import datetime
+from django.http import HttpResponse
 
 api = NinjaAPI()
 
@@ -45,6 +47,23 @@ def test_slice(request, idx: int):
     t2 = time.time()
 
     return {"sum": int(res), "time": t2-t1}
+
+
+@api.get('/frame/{idx}')
+def test_frame(request, idx: int):
+    import numpy as np
+    from PIL import Image
+    d1 = np.memmap('/app/bucket/test_flim.npy', np.int8, 'r', shape=(512, 512, 3, 20, 133))
+    dat = np.clip(100*d1[:, :, :, idx, :].sum(axis=-1), 0, 255).astype(np.uint8)
+    img = Image.fromarray(dat, "RGB")
+    return serve_pil_image(img)
+
+
+def serve_pil_image(pil_img):
+    img_io = BytesIO()
+    pil_img.save(img_io, 'JPEG', quality=70)
+    img_io.seek(0)
+    return HttpResponse(img_io)
 
 
 @api.exception_handler(AuthenticationError)
