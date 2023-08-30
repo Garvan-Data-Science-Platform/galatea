@@ -21,7 +21,7 @@ export function ImageCanvas() {
   React.useEffect(() => {
     if (loaded) {
       const canvas = canvasRef.current as HTMLCanvasElement;
-      canvas.addEventListener("mousedown", function (e) {
+      canvas.addEventListener("mouseup", function (e) {
         getCursorPosition(canvas, e);
       });
       const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
