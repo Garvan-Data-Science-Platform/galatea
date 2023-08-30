@@ -3,6 +3,7 @@ FROM python:3.11.4-slim-bookworm
 WORKDIR /app
 
 ENV PYTHONBUFFERED 1
+ENV DJANGO_SETTINGS_MODULE "galatea/production_settings.py"
 
 RUN apt-get update && apt-get install curl lsb-release gnupg2 -y && \
     GCSFUSE_REPO=gcsfuse-`lsb_release -c -s` && \
