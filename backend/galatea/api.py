@@ -77,7 +77,7 @@ def serve_pil_image(pil_img):
     img_io = BytesIO()
     pil_img.save(img_io, 'JPEG', quality=70)
     img_io.seek(0)
-    res = HttpResponse(img_io)
+    res = HttpResponse(img_io, content_type='image/jpeg')
     patch_cache_control(res, max_age=3600)
     return res
 

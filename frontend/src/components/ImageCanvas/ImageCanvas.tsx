@@ -4,6 +4,7 @@ import { selectImageSrc, setSrc } from "state/slices/imageSlice";
 import { selectChartFrame, setChartData } from "state/slices/chartSlice";
 import "./ImageCanvas.scss";
 import { loadTimeSeries } from "requests/flim";
+import { CircularProgress } from "@mui/material";
 
 export function ImageCanvas() {
   const [loaded, setLoaded] = React.useState(false);
@@ -21,20 +22,16 @@ export function ImageCanvas() {
   React.useEffect(() => {
     if (loaded) {
       const canvas = canvasRef.current as HTMLCanvasElement;
-      canvas.addEventListener("mouseup", function (e) {
-        getCursorPosition(canvas, e);
-      });
       const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
       const img = imageRef.current as HTMLImageElement;
-      img.height = 512;
-      img.width = 512;
-      img.src = imageSrc || "";
       ctx.drawImage(img, 0, 0);
     }
   }, [loaded]);
 
-  function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent) {
-    const rect = canvas.getBoundingClientRect();
+  function getCursorPosition(
+    event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+  ) {
+    const rect = (event.target as HTMLCanvasElement).getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     console.log(x, y);
@@ -45,7 +42,22 @@ export function ImageCanvas() {
 
   return (
     <div style={{ width: 512, height: 512, backgroundColor: "#c9c5c5" }}>
-      <canvas width={512} height={512} ref={canvasRef} />
+      <canvas
+        width={512}
+        height={512}
+        ref={canvasRef}
+        onClick={(e) => {
+          getCursorPosition(e);
+        }}
+      />
+      <CircularProgress
+        style={{
+          position: "relative",
+          bottom: 256 + 15,
+          left: 0,
+          visibility: !imageSrc || loaded ? "hidden" : "visible",
+        }}
+      />
       <img
         width={512}
         height="auto"

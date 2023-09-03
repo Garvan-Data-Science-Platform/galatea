@@ -1,0 +1,11 @@
+---
+auth:
+  securePassword: false
+
+service:
+  type: "LoadBalancer"
+
+plugins: "rabbitmq_prometheus rabbitmq_management rabbitmq_peer_discovery_k8s"
+
+extraConfiguration: |-
+  consumer_timeout = 432000000

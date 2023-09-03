@@ -88,6 +88,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push Docker image - worker
+        if: steps.filter.outputs.backend == 'true'
+        uses: docker/build-push-action@v3
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.worker
+          push: true
+          tags: |
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:latest
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       #Based on https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-google-kubernetes-engine
       - name: Deploy
         run: |-
@@ -95,3 +108,4 @@ jobs:
           yarn --cwd frontend build
           gsutil -m rsync -r -c -d frontend/dist gs://galatea-static-website-bucket/
           kubectl rollout restart deployment/api
+          kubectl rollout restart deployment/worker
