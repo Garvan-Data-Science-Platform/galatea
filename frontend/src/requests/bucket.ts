@@ -12,7 +12,7 @@ export async function loadBucketDirectory(
 ): Promise<[BucketFile[], string[]]> {
   let headers = { Authorization: `Bearer ${token}` };
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
-  var url = `${backendURL}/api/bucket/${props.bucket}?limit=${props.limit}`;
+  var url = `${backendURL}/bucket/${props.bucket}?limit=${props.limit}`;
 
   if (props.subdir) {
     url = url.concat("&subdir=", props.subdir);

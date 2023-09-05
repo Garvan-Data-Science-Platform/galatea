@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from django.http import HttpResponse, JsonResponse
 from ninja.security import HttpBearer
 from ninja.errors import AuthenticationError
+from django.contrib.auth.models import User, Group
+from django.contrib.auth import login
 
 load_dotenv()
 
@@ -52,6 +54,7 @@ class Auth0Service:
                 audience=self.audience,
                 issuer=self.issuer_url,
             )
+            print("PAYLOAD", payload)
         except Exception as error:
             json_abort(HTTPStatus.UNAUTHORIZED, {
                 "error": "invalid_token",
@@ -69,6 +72,16 @@ auth0_service = Auth0Service()
 class AuthBearer(HttpBearer):
     def authenticate(self, request, token):
         validated_token = auth0_service.validate_jwt(token)
+        try:
+            user = User.objects.get(email=validated_token["email"])
+        except User.DoesNotExist:
+            user = User(username=validated_token["email"], email=validated_token["email"])
+            user.save()
+            if validated_token['email'].split('@')[-1] == 'garvan.org.au':
+                grp = Group.objects.get(name="Garvan users")
+                user.groups.add(grp)
+                user.save()
+        login(request, user)
         return validated_token
 
 

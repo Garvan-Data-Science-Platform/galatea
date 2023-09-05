@@ -22,7 +22,7 @@ resource "kubernetes_deployment" "worker" {
         volume {
           name = "secret-volume"
           secret  {
-            secret_name = "storage-key.json"
+            secret_name = "sa-key.json"
           }
         }
         termination_grace_period_seconds = 32400 #9hrs

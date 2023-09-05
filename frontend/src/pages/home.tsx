@@ -19,25 +19,13 @@ const Home = () => {
 
   return (
     <>
-      {/*
-      <div
-        style={{
-          width: 1200,
-          height: 600,
-          //backgroundColor: "rgba(130, 130, 130, 0.5)",
-          flexDirection: "row",
-          display: "flex",
+      <FileBrowser
+        bucket="galatea"
+        onSelectFile={(file) => {
+          console.log("Setting image to", file.url);
+          //setCurrentImg(file.url);
         }}
-      >
-       
-                  <FileBrowser
-          bucket="cabana-dev"
-          onSelectFile={(file) => {
-            console.log("Setting image to", file.url);
-            //setCurrentImg(file.url);
-          }}
-        />
-          */}
+      />
 
       <ImageCanvas />
       {
@@ -57,9 +45,7 @@ const Home = () => {
       />
       <p>Click image to see chart data at pixel</p>
       <div>
-        {/*
         <LoginButton />
-        */}
       </div>
       <Histogram />
     </>

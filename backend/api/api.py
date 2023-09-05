@@ -2,7 +2,7 @@ from io import BytesIO
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError
 from google.cloud import storage
-from .auth import AuthBearer
+from galatea.auth import AuthBearer
 from .schemas import BucketFileList
 from typing import List
 import datetime
@@ -11,6 +11,7 @@ from django.utils.cache import patch_cache_control
 import numpy as np
 from PIL import Image
 from django.conf import settings
+from django.contrib.auth.decorators import permission_required
 
 api = NinjaAPI()
 
@@ -24,6 +25,7 @@ if settings.DEBUG:
 
 
 @api.get("/bucket/{bucket}/", response=BucketFileList, auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def list_bucket(request, bucket: str, subdir: str | None = None, limit: int | None = None):
     if subdir:
         prefix = subdir + "/"
