@@ -21,7 +21,7 @@ export function Histogram() {
   };
 
   return (
-    <div style={{ width: 600, height: 600 }}>
+    <div style={{ width: 600, height: 300 }}>
       <Bar data={chartData} options={{ scales: { y: { suggestedMax: 2 } } }} />
     </div>
   );

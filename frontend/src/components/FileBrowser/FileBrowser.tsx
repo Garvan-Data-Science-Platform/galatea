@@ -1,4 +1,4 @@
-import "./FileBrowser.scss";
+import classes from "./FileBrowser.module.scss";
 import ListSubheader from "@mui/material/ListSubheader";
 import List from "@mui/material/List";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -18,6 +18,7 @@ function FileBrowser(props: FileBrowserProps) {
   return (
     <List
       sx={{ width: "100%", maxWidth: 360, bgcolor: "background.paper" }}
+      className={classes.filebrowser}
       component="nav"
       aria-labelledby="nested-list-subheader"
       subheader={

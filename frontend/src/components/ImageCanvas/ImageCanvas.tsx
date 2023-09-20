@@ -4,7 +4,7 @@ import { selectImageSrc, setSrc } from "state/slices/imageSlice";
 import { selectChartFrame, setChartData } from "state/slices/chartSlice";
 import "./ImageCanvas.scss";
 import { loadTimeSeries } from "requests/flim";
-import { CircularProgress } from "@mui/material";
+import { Card, CircularProgress } from "@mui/material";
 
 export function ImageCanvas() {
   const [loaded, setLoaded] = React.useState(false);
@@ -41,33 +41,35 @@ export function ImageCanvas() {
   }
 
   return (
-    <div style={{ width: 512, height: 512, backgroundColor: "#c9c5c5" }}>
-      <canvas
-        width={512}
-        height={512}
-        ref={canvasRef}
-        onClick={(e) => {
-          getCursorPosition(e);
-        }}
-      />
-      <CircularProgress
-        style={{
-          position: "relative",
-          bottom: 256 + 15,
-          left: 0,
-          visibility: !imageSrc || loaded ? "hidden" : "visible",
-        }}
-      />
-      <img
-        width={512}
-        height="auto"
-        src={imageSrc}
-        ref={imageRef}
-        onLoad={() => {
-          setLoaded(true);
-        }}
-        style={{ display: "none" }}
-      />
-    </div>
+    <Card style={{ padding: 20 }}>
+      <div style={{ width: 512, height: 512 }}>
+        <canvas
+          width={512}
+          height={512}
+          ref={canvasRef}
+          onClick={(e) => {
+            getCursorPosition(e);
+          }}
+        />
+        <CircularProgress
+          style={{
+            position: "relative",
+            bottom: 256 + 15,
+            left: 0,
+            visibility: !imageSrc || loaded ? "hidden" : "visible",
+          }}
+        />
+        <img
+          width={512}
+          height="auto"
+          src={imageSrc}
+          ref={imageRef}
+          onLoad={() => {
+            setLoaded(true);
+          }}
+          style={{ display: "none" }}
+        />
+      </div>
+    </Card>
   );
 }
