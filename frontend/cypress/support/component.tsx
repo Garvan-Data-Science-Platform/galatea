@@ -15,13 +15,13 @@
 
 // Import commands.js using ES2015 syntax:
 import "./commands";
-
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
 import { mount } from "cypress/react18";
 
 import { Provider } from "react-redux";
+import { Auth0Provider } from "@auth0/auth0-react";
 
 import { store } from "../../src/state/store";
 
@@ -41,7 +41,18 @@ Cypress.Commands.add("mount", (component, options = {}) => {
   // Use the default store if one is not provided
   const { reduxStore = store, ...mountOptions } = options;
 
-  const wrapped = <Provider store={reduxStore}>{component}</Provider>;
+  const wrapped = (
+    <Auth0Provider
+      domain="dev-xedas2iasb2dv6bb.us.auth0.com"
+      clientId="q1355w8Tk2hrQDJYZFradQvw4g9GIHfu"
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        audience: "https://galatea-backend/",
+      }}
+    >
+      <Provider store={reduxStore}>{component}</Provider>
+    </Auth0Provider>
+  );
 
   return mount(wrapped, mountOptions);
 });

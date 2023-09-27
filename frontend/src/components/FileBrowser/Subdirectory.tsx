@@ -6,9 +6,13 @@ import ListItemText from "@mui/material/ListItemText";
 import Collapse from "@mui/material/Collapse";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
-import { useAuth0 } from "@auth0/auth0-react";
 import { Folder, InsertDriveFile } from "@mui/icons-material";
 import { loadBucketDirectory } from "requests/bucket";
+import { Alert, Checkbox } from "@mui/material";
+import { useAppDispatch } from "state/hooks";
+import { toggleSelected } from "state/slices/fileSelectionSlice";
+import auth0mockable from "../../auth0mockable";
+import classes from "./FileBrowser.module.scss";
 
 interface DirectoryI {
   name: string;
@@ -24,7 +28,9 @@ interface SubdirectoryProps {
   bucket: string;
   parent?: string;
   level: number;
-  onSelectFile: (file: BucketFile) => void;
+  onClickFile?: (file: BucketFile) => void;
+  selectedFolder: string;
+  setSelectedFolder: (file: string, load: () => Promise<void>) => void;
 }
 
 export interface BucketFile {
@@ -33,41 +39,40 @@ export interface BucketFile {
 }
 
 export function Subdirectory(props: SubdirectoryProps) {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = auth0mockable.useAuth0();
   const [subdirs, setSubdirs] = React.useState<DirectoryI[]>([]);
   const [files, setFiles] = React.useState<BucketFile[]>([]);
   const [open, setOpen] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
+  const [alertMessage, setAlertMessage] = React.useState("");
+
+  const dispatch = useAppDispatch();
+
+  const folderString = props.parent
+    ? props.parent + "/" + (props.name || "")
+    : props.name || "";
 
   const handleClick = () => {
+    setOpen(true);
+    props.setSelectedFolder(folderString, load);
     if (!loaded) {
       load();
       return;
     }
-    setOpen(!open);
   };
 
   const load = async () => {
     let token = await getAccessTokenSilently();
 
-    var subdir;
-
-    if (props.level > 1) {
-      if (props.level == 2) {
-        subdir = props.name || "";
-      } else {
-        subdir = props.parent + "/" + (props.name || "");
-      }
-    }
     var files, folders;
     try {
       [files, folders] = await loadBucketDirectory(token, {
         bucket: props.bucket,
-        subdir: subdir,
+        subdir: folderString,
         limit: 50,
       });
     } catch (e) {
-      alert(e);
+      setAlertMessage(e);
       return;
     }
 
@@ -100,15 +105,59 @@ export function Subdirectory(props: SubdirectoryProps) {
     setLoaded(true);
   };
 
+  React.useEffect(() => {
+    if (props.level == 1) {
+      props.setSelectedFolder(folderString, load);
+      load();
+    }
+  }, []);
+
   return (
-    <>
-      <ListItemButton onClick={handleClick} sx={{ pl: 2 * props.level }}>
-        <ListItemIcon>
+    <div
+      className={
+        props.selectedFolder == folderString ? classes.selected : undefined
+      }
+      cy-selected={String(props.selectedFolder == folderString)}
+    >
+      {alertMessage != "" ? (
+        <Alert
+          severity="error"
+          onClose={() => {
+            setAlertMessage("");
+          }}
+        >
+          {alertMessage}
+        </Alert>
+      ) : null}
+      <ListItemButton
+        onClick={handleClick}
+        sx={{ pl: 2 * Math.max(props.level - 1, 1) }}
+      >
+        {props.level == 1 ? null : (
+          <Checkbox
+            onClick={(e) => {
+              e.stopPropagation();
+              dispatch(toggleSelected(folderString));
+            }}
+          />
+        )}
+        <ListItemIcon sx={{ minWidth: 34 }}>
           <Folder />
         </ListItemIcon>
         <ListItemText primary={props.name || props.bucket} />
-        {open ? <ExpandLess /> : <ExpandMore />}
+        {open ? (
+          <ExpandLess
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(false);
+            }}
+            data-cy="collapse"
+          />
+        ) : (
+          <ExpandMore />
+        )}
       </ListItemButton>
+
       <Collapse in={open} timeout="auto" unmountOnExit>
         <List component="div" disablePadding>
           {subdirs.map((v): any => (
@@ -118,16 +167,24 @@ export function Subdirectory(props: SubdirectoryProps) {
               parent={v.parent}
               level={props.level + 1}
               key={`${v.parent}_${v.name}`}
-              onSelectFile={props.onSelectFile}
+              onClickFile={props.onClickFile}
+              selectedFolder={props.selectedFolder}
+              setSelectedFolder={props.setSelectedFolder}
             />
           ))}
           {files.map((v, idx) => (
             <ListItemButton
-              sx={{ pl: 2 * (props.level + 1) }}
+              sx={{ pl: 2 * props.level }}
               key={`${v}_${idx}`}
-              onClick={() => props.onSelectFile(v)}
+              onClick={() => (props.onClickFile ? props.onClickFile(v) : null)}
             >
-              <ListItemIcon>
+              <Checkbox
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dispatch(toggleSelected(v.name));
+                }}
+              />
+              <ListItemIcon sx={{ minWidth: 34 }}>
                 <InsertDriveFile />
               </ListItemIcon>
               <ListItemText primary={v.name.split("/").slice(-1)} />
@@ -135,6 +192,6 @@ export function Subdirectory(props: SubdirectoryProps) {
           ))}
         </List>
       </Collapse>
-    </>
+    </div>
   ) as any;
 }

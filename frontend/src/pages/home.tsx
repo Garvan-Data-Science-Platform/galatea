@@ -38,7 +38,19 @@ const Home = () => {
 
   return (
     <Box sx={{ display: "flex", backgroundColor: "#f3f6f9" }}>
-      <TopBarDrawerLayout>
+      <TopBarDrawerLayout
+        sidebarContent={
+          <FileBrowser
+            bucket="galatea"
+            onClickFile={(f) => {
+              console.log("Click file", f);
+            }}
+            onSelect={(f) => {
+              console.log("select", f);
+            }}
+          />
+        }
+      >
         <Box
           sx={{
             display: "flex",

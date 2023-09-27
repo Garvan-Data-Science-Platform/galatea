@@ -54,7 +54,6 @@ class Auth0Service:
                 audience=self.audience,
                 issuer=self.issuer_url,
             )
-            print("PAYLOAD", payload)
         except Exception as error:
             json_abort(HTTPStatus.UNAUTHORIZED, {
                 "error": "invalid_token",

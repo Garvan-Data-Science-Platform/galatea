@@ -39,8 +39,56 @@ def list_bucket(request, bucket: str, subdir: str | None = None, limit: int | No
     blobs = [r for i, r in enumerate(results) if i < limit and r.name != str(subdir) + '/']
     files = [{'name': b.name, 'url': b.generate_signed_url(version='v4', expiration=datetime.timedelta(minutes=15), method='GET')} for b in blobs]
     folders: List[str] = list(results.prefixes)
+    if '/' in folders:
+        folders.remove('/')
 
     return {"files": files, "folders": folders}
+
+
+@api.put("/bucket/{bucket}/folder", auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
+def create_folder(request, bucket: str, folderName: str):
+    """Create new folder in bucket"""
+
+    bucket = storage_client.get_bucket(bucket)
+    if folderName[-1] != '/':
+        folderName = folderName + '/'
+    blob = bucket.blob(folderName)
+    blob.upload_from_string('', content_type='application/x-www-form-urlencoded;charset=UTF-8')
+
+    return {"status": "ok"}
+
+
+@api.delete("/bucket/{bucket}/folder", auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
+def delete_folder(request, bucket: str, folderName: str):
+    """Delete a folder from the bucket"""
+
+    bucket = storage_client.get_bucket(bucket)
+    blobs = bucket.list_blobs(prefix=folderName)
+    for b in blobs:
+        b.delete()
+
+    return {"status": "ok"}
+
+
+@api.get("/bucket/{bucket}/upload", auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
+def get_upload_url(request, bucket: str, path: str):
+    """Get a signed upload URL"""
+
+    bucket = storage_client.get_bucket(bucket)
+    blob = bucket.blob(path)
+    url = blob.generate_signed_url(
+        version="v4",
+        # This URL is valid for 15 minutes
+        expiration=datetime.timedelta(minutes=15),
+        # Allow PUT requests using this URL.
+        method="PUT",
+        content_type="application/octet-stream",
+    )
+
+    return {"url": url}
 
 
 @api.get('/')

@@ -1,0 +1,9 @@
+[
+  //Apply with gsutil cors set
+  {
+    "origin": ["*"],
+    "method": ["*"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["*"]
+  }
+]
