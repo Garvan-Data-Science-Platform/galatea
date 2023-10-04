@@ -82,7 +82,9 @@ function FileBrowser(props: FileBrowserProps) {
       body: formData,
       headers: { "Content-Type": "application/octet-stream" },
     });
-    await convertPTFile(token, path);
+    if (["pt3", "npy", "ptu"].includes(file.name.slice(-3))) {
+      await convertPTFile(token, path);
+    }
     setUploading(false);
     reloader();
   };
