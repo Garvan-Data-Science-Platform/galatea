@@ -1,32 +1,59 @@
 version: "3"
 
 services:
-  frontend:
-    build:
-      context: ../frontend
+  redis:
+    image: redis:alpine
     ports:
-      - 5173:5173
+      - 6379:6379
 
-  backend:
-    depends_on:
-      - db
+  worker:
     build:
-      context: ../backend
-    environment:
-      - DB_ENGINE=django.db.backends.postgresql
-      - DB_NAME=test_db
-      - DB_USER=test_user
-      - DB_PASSWORD=test_password
-      - DB_HOST=db
-      - DB_PORT=5432
-    ports:
-      - 8000:8000
+      context: ../backend/
+      dockerfile: ../backend/docker/Dockerfile.worker
     volumes:
       - /tmp/secret-volume:/etc/secret-volume
-
-  db:
-    image: postgres:15
+    privileged: true
+    #entrypoint: celery
+    command: ./docker/entrypoint-worker.sh
     environment:
-      - POSTGRES_USER=test_user
-      - POSTGRES_PASSWORD=test_password
-      - POSTGRES_DB=test_db
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis/0
+      BUCKET_NAME: galatea
+      #PYTHONPATH: /data
+    depends_on:
+      - redis
+      - app
+  flower:
+    build:
+      context: ../backend
+      dockerfile: ../backend/docker/Dockerfile.flower
+    command: celery -A worker.tasks flower
+    ports:
+      - 5555:5555
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis/0
+    depends_on:
+      - worker
+      - redis
+  app:
+    build:
+      context: ../backend
+      dockerfile: ../backend/docker/Dockerfile
+    volumes:
+      - /tmp/secret-volume:/etc/secret-volume
+    privileged: true
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis/0
+      BUCKET_NAME: galatea
+      HOSTNAME: http://localhost
+      TEST_ENV: "yes"
+      PYTHONUNBUFFERED: "TRUE"
+      FLOWER_HOSTNAME: flower
+      FLOWER_PASSWORD: testpassword
+      DJANGO_SETTINGS_MODULE: "galatea.settings"
+    ports:
+      - 8000:8000
+    command:
+      - "/app/docker/entrypoint.sh"
