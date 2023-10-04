@@ -1,0 +1,72 @@
+version: "3"
+
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+
+  worker:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile.worker
+    volumes:
+      #- /home/tim/projects/imagej/cabana-cloud:/app
+      - /etc/secret-volume:/etc/secret-volume
+    privileged: true
+    #entrypoint: celery
+    command: ./docker/entrypoint-worker-dev.sh
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis/0
+      BUCKET_NAME: galatea
+      #PYTHONPATH: /data
+    depends_on:
+      - redis
+      - app
+    volumes:
+      - ../worker/tasks.py:/app/worker/tasks.py
+      - /etc/secret-volume:/etc/secret-volume
+  flower:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile.flower
+    command: celery -A worker.tasks flower
+    ports:
+      - 5555:5555
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis/0
+    depends_on:
+      - worker
+      - redis
+  app:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    privileged: true
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis/0
+      BUCKET_NAME: galatea
+      HOSTNAME: http://localhost
+      TEST_ENV: "yes"
+      PYTHONUNBUFFERED: "TRUE"
+      FLOWER_HOSTNAME: flower
+      FLOWER_PASSWORD: testpassword
+      DJANGO_SETTINGS_MODULE: "galatea.settings"
+    ports:
+      - 8000:8000
+    command:
+      - "/app/docker/entrypoint-dev.sh"
+    #command: --reload
+    volumes:
+      - ../api:/app/api
+      - ../worker/tasks.py:/app/worker/tasks.py
+      - ../../working:/app/working
+      - /etc/secret-volume:/etc/secret-volume
+
+volumes:
+  redis_data:

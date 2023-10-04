@@ -9,10 +9,11 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import { Folder, InsertDriveFile } from "@mui/icons-material";
 import { loadBucketDirectory } from "requests/bucket";
 import { Alert, Checkbox } from "@mui/material";
-import { useAppDispatch } from "state/hooks";
+import { useAppDispatch, useAppSelector } from "state/hooks";
 import { toggleSelected } from "state/slices/fileSelectionSlice";
 import auth0mockable from "../../auth0mockable";
 import classes from "./FileBrowser.module.scss";
+import { selectCurrentImage } from "state/slices/imageSlice";
 
 interface DirectoryI {
   name: string;
@@ -28,7 +29,7 @@ interface SubdirectoryProps {
   bucket: string;
   parent?: string;
   level: number;
-  onClickFile?: (file: BucketFile) => void;
+  onClickFile?: (file: BucketFile, ls: string[]) => void;
   selectedFolder: string;
   setSelectedFolder: (file: string, load: () => Promise<void>) => void;
 }
@@ -47,6 +48,7 @@ export function Subdirectory(props: SubdirectoryProps) {
   const [alertMessage, setAlertMessage] = React.useState("");
 
   const dispatch = useAppDispatch();
+  const currentImage = useAppSelector(selectCurrentImage);
 
   const folderString = props.parent
     ? props.parent + "/" + (props.name || "")
@@ -176,7 +178,14 @@ export function Subdirectory(props: SubdirectoryProps) {
             <ListItemButton
               sx={{ pl: 2 * props.level }}
               key={`${v}_${idx}`}
-              onClick={() => (props.onClickFile ? props.onClickFile(v) : null)}
+              onClick={() =>
+                props.onClickFile
+                  ? props.onClickFile(
+                      v,
+                      files.map((val) => val.name)
+                    )
+                  : null
+              }
             >
               <Checkbox
                 onClick={(e) => {
@@ -187,7 +196,12 @@ export function Subdirectory(props: SubdirectoryProps) {
               <ListItemIcon sx={{ minWidth: 34 }}>
                 <InsertDriveFile />
               </ListItemIcon>
-              <ListItemText primary={v.name.split("/").slice(-1)} />
+              <ListItemText
+                primaryTypographyProps={{
+                  fontWeight: currentImage == v.name ? "bold" : undefined,
+                }}
+                primary={v.name.split("/").slice(-1)}
+              />
             </ListItemButton>
           ))}
         </List>

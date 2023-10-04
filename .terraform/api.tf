@@ -58,6 +58,10 @@ resource "kubernetes_deployment" "api" {
             value = "postgres"
           }
           env {
+            name = "ENV DJANGO_SETTINGS_MODULE"
+            value = "galatea.production_settings"
+          }
+          env {
             name = "POSTGRES_PASSWORD"
             value = data.google_secret_manager_secret_version.postgres_password.secret_data
           }

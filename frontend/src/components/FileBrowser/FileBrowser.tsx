@@ -32,10 +32,11 @@ import {
   selectFileSelectionSelected,
 } from "state/slices/fileSelectionSlice";
 import auth0mockable from "../../auth0mockable";
+import { convertPTFile } from "requests/flim";
 
 interface FileBrowserProps {
   bucket: string;
-  onClickFile?: (filepath: BucketFile) => void;
+  onClickFile?: (filepath: BucketFile, ls: string[]) => void;
 }
 
 function FileBrowser(props: FileBrowserProps) {
@@ -69,11 +70,9 @@ function FileBrowser(props: FileBrowserProps) {
   ) => {
     const token = await getAccessTokenSilently();
     let file = event.target.files[0];
-    let url = await getUploadURL(
-      token,
-      "galatea",
-      selectedFolder != "" ? selectedFolder + "/" + file.name : file.name
-    );
+    let path =
+      selectedFolder != "" ? selectedFolder + "/" + file.name : file.name;
+    let url = await getUploadURL(token, "galatea", path);
     console.log("URL", url);
     let formData = new FormData();
     formData.append("file", file);
@@ -83,6 +82,7 @@ function FileBrowser(props: FileBrowserProps) {
       body: formData,
       headers: { "Content-Type": "application/octet-stream" },
     });
+    await convertPTFile(token, path);
     setUploading(false);
     reloader();
   };
@@ -122,7 +122,7 @@ function FileBrowser(props: FileBrowserProps) {
       aria-labelledby="nested-list-subheader"
       subheader={
         <ListSubheader component="div" id="nested-list-subheader">
-          Select or upload a .pt3
+          Select or upload a .pt3 or .ptu file
         </ListSubheader>
       }
     >
@@ -134,7 +134,13 @@ function FileBrowser(props: FileBrowserProps) {
 
       <Tooltip title="Upload file">
         <IconButton component="label">
-          <input type="file" id="upload-input" hidden onChange={handleUpload} />
+          <input
+            type="file"
+            accept=".ptu,.pt3"
+            id="upload-input"
+            hidden
+            onChange={handleUpload}
+          />
           <UploadFile data-cy="upload-button" />
         </IconButton>
       </Tooltip>

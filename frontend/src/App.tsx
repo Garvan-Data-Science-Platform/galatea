@@ -11,7 +11,8 @@ import {
 } from "@auth0/auth0-react";
 import { Provider } from "react-redux";
 import { store } from "./state/store.ts";
-import React from "react";
+import { ThemeProvider } from "@mui/material/styles";
+import theme from "./theme";
 
 function App() {
   return (
@@ -25,14 +26,16 @@ function App() {
         }}
       >
         <Provider store={store}>
-          <Routes>
-            <Route
-              path="/"
-              element={<AuthenticationGuard component={HomePage} />}
-            />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/login" element={<LoginPage />} />
-          </Routes>
+          <ThemeProvider theme={theme}>
+            <Routes>
+              <Route
+                path="/"
+                element={<AuthenticationGuard component={HomePage} />}
+              />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/login" element={<LoginPage />} />
+            </Routes>
+          </ThemeProvider>
         </Provider>
       </Auth0Provider>
     </Router>

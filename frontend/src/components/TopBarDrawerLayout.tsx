@@ -1,4 +1,5 @@
 import {
+  Box,
   Drawer,
   IconButton,
   List,
@@ -11,11 +12,14 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import { AccountCircle } from "@mui/icons-material";
-import React, { ReactComponentElement } from "react";
+import React, { Children, ReactComponentElement, memo } from "react";
 import { styled, useTheme } from "@mui/material/styles";
 import Divider from "@mui/material/Divider";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { selectCurrentImage } from "state/slices/imageSlice";
+import { useAppSelector } from "state/hooks";
+import auth0mockable from "../auth0mockable";
 
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
@@ -32,12 +36,15 @@ export default function TopBarDrawerLayout({
 }: TopBarDrawerLayoutProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [open, setOpen] = React.useState(true);
+  const currentImage = useAppSelector(selectCurrentImage);
+
+  const { user, logout } = auth0mockable.useAuth0();
+
   const theme = useTheme();
 
   const drawerWidth = 300;
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-    console.log(event.currentTarget);
     setAnchorEl(event.currentTarget);
   };
 
@@ -114,7 +121,10 @@ export default function TopBarDrawerLayout({
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Galatea
+            Galatea{" "}
+            {currentImage
+              ? "- " + currentImage.split("/").at(-1)?.replace(".npy", "")
+              : ""}
           </Typography>
           <div>
             <IconButton
@@ -142,8 +152,17 @@ export default function TopBarDrawerLayout({
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
-              <MenuItem onClick={handleClose}>Profile</MenuItem>
-              <MenuItem onClick={handleClose}>My account</MenuItem>
+              <Box sx={{ p: 1 }}>
+                <Typography>{user?.email}</Typography>
+                <MenuItem
+                  onClick={() => {
+                    handleClose();
+                    logout();
+                  }}
+                >
+                  Log out
+                </MenuItem>
+              </Box>
             </Menu>
           </div>
         </Toolbar>
@@ -174,7 +193,7 @@ export default function TopBarDrawerLayout({
 
         {sidebarContent}
       </Drawer>
-      <Main sx={{ marginTop: 2 }} open={open}>
+      <Main sx={{ marginTop: 2, backgroundColor: "#f3f6f9" }} open={open}>
         {children}
       </Main>
     </>

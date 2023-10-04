@@ -8,6 +8,10 @@ psycopg2-binary==2.9.6
 PyJWT==2.2.0
 cryptography==41.0.0
 python-dotenv==0.21.0
-numpy==1.25
+numpy==1.24.4
 Pillow==10.0.0
 celery==5.3.4
+redis==4.5.5
+numba==0.57.1
+numba-progress==1.1.0
+watchdog

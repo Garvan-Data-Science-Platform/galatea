@@ -8,14 +8,14 @@ import { selectChartData } from "state/slices/chartSlice";
 import { Paper, Typography } from "@mui/material";
 Chart.register(...registerables);
 
-export function Histogram() {
+export function MetricChart() {
   const data = useAppSelector(selectChartData);
   const labels = Array.from(Array(132).keys());
   const chartData = {
     labels: labels,
     datasets: [
       {
-        label: "Photon Count (5x5 box)",
+        label: "Photon Count",
         data: data,
         spanGaps: 5,
       },
@@ -24,17 +24,9 @@ export function Histogram() {
 
   return (
     <Paper sx={{ flexGrow: 1, height: 300, padding: 1 }}>
-      <Typography fontStyle="italic">
-        Click FLIM Image above to populate chart
-      </Typography>
       <Bar
         data={chartData}
-        options={{
-          scales: {
-            y: { suggestedMax: 2 },
-            x: { type: "linear", title: { text: "Nanotimes", display: true } },
-          },
-        }}
+        options={{ scales: { y: { suggestedMax: 2 }, x: { type: "linear" } } }}
       />
     </Paper>
   );
