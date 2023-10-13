@@ -1,6 +1,6 @@
 FROM python:3.11.4-slim-bookworm
 
-RUN pip install celery flower redis==4.5.5 python-dotenv
+RUN pip install celery flower redis==4.5.5 python-dotenv numpy
 
 WORKDIR /app
 

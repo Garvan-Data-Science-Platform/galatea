@@ -22,6 +22,7 @@ services:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: redis://redis/0
       BUCKET_NAME: galatea
+      DEV: "true"
       #PYTHONPATH: /data
     depends_on:
       - redis
@@ -29,6 +30,7 @@ services:
     volumes:
       - ../worker/tasks.py:/app/worker/tasks.py
       - /etc/secret-volume:/etc/secret-volume
+      - ../../working:/app/working
   flower:
     build:
       context: ../
