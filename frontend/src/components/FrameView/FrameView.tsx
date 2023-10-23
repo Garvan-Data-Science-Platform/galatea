@@ -51,6 +51,9 @@ export function FrameView() {
   const sliderRef = React.useRef();
   const [sliderVal, setSliderVal] = React.useState(1);
 
+  const resultID = "044bb779-5c12-4058-a1eb-d22df4837acb";
+  const resultReady = true;
+
   const onSliderChange = (e, val) => {
     setImageSrc((state) => {
       setSliderVal(val);
@@ -58,10 +61,30 @@ export function FrameView() {
         ...state,
         original: `${import.meta.env.VITE_BACKEND_URL}/frame/${
           val - 1 // index starting at 1 not 0
-        }?source=${currentImage}`,
+        }?source=${currentImage}.npy`,
       };
     });
+
+    if (resultReady) {
+      setImageSrc((state) => {
+        return {
+          ...state,
+          combined: `${
+            import.meta.env.VITE_BACKEND_URL
+          }/frame-corrected/${resultID}/${val - 1}`,
+        };
+      });
+    }
   };
+
+  //Prevents image prefetching bug with firefox causing image to load twice
+  function addSrc(src: string) {
+    return function (img: HTMLImageElement) {
+      if (img) {
+        img.src = src;
+      }
+    };
+  }
 
   React.useEffect(() => {
     if (currentImage) {
@@ -71,11 +94,24 @@ export function FrameView() {
           ...state,
           original: `${
             import.meta.env.VITE_BACKEND_URL
-          }/frame/1?source=${currentImage}`,
+          }/frame/1?source=${currentImage}.npy`,
         };
       });
     }
   }, [currentImage]);
+
+  React.useEffect(() => {
+    if (resultReady) {
+      setImageSrc((state) => {
+        return {
+          ...state,
+          combined: `${
+            import.meta.env.VITE_BACKEND_URL
+          }/frame-corrected/${resultID}/1`,
+        };
+      });
+    }
+  }, [resultReady]);
 
   return (
     <Paper style={{ padding: 5 }}>
@@ -105,7 +141,7 @@ export function FrameView() {
         <img
           width={300}
           height={300}
-          src={imageSrc.original + `&channel=${channel}`}
+          ref={addSrc(imageSrc.original + `&channel=${channel}`)}
           key={imageSrc.original}
           style={{ marginRight: 4, backgroundColor: "grey" }}
         />

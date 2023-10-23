@@ -37,6 +37,8 @@ import { convertPTFile } from "requests/flim";
 interface FileBrowserProps {
   bucket: string;
   onClickFile?: (filepath: BucketFile, ls: string[]) => void;
+  extensions?: string[];
+  combine?: boolean;
 }
 
 function FileBrowser(props: FileBrowserProps) {
@@ -226,6 +228,8 @@ function FileBrowser(props: FileBrowserProps) {
       </Popover>
       <Subdirectory
         bucket={props.bucket}
+        extensions={props.extensions}
+        combine={props.combine}
         key={key}
         level={1}
         onClickFile={props.onClickFile}

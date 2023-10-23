@@ -7,7 +7,7 @@ export interface ChartState {
 }
 
 const initialState: ChartState = {
-  data: [],
+  data: Array(133).fill(0),
   frame: 0,
 };
 

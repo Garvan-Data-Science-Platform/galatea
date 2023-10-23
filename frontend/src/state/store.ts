@@ -1,6 +1,7 @@
 import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
 import imageReducer from "./slices/imageSlice";
 import chartReducer from "./slices/chartSlice";
+import resultsReducer from "./slices/resultsSlice";
 import fileSelectionReducer from "./slices/fileSelectionSlice";
 
 export const store = configureStore({
@@ -8,6 +9,7 @@ export const store = configureStore({
     image: imageReducer,
     chart: chartReducer,
     fileSelection: fileSelectionReducer,
+    results: resultsReducer,
   },
 });
 

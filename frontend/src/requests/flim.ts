@@ -55,10 +55,57 @@ export async function getFrameCount(token: string, source: string) {
   return dat.frames;
 }
 
+interface ApplyCorrectionProps {
+  source: string;
+  reference_frame: number;
+  channel: number;
+  local_algorithm?: string;
+  global_algorithm?: string;
+  local_params: Map<string, number>;
+}
+
+export async function applyCorrection(
+  token: string,
+  props: ApplyCorrectionProps
+) {
+  let headers = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+  let backendURL = import.meta.env["VITE_BACKEND_URL"];
+  var url = new URL(`${backendURL}/apply-correction`);
+  for (const [key, val] of Object.entries(props)) {
+    if (val != undefined && key != "local_params") {
+      url.searchParams.set(key, val);
+    }
+  }
+  let res = await fetch(url, {
+    headers,
+    method: "POST",
+    body: JSON.stringify({ local_params: props.local_params }),
+  });
+  if (!res.ok) {
+    return Promise.reject("Server error: " + res.statusText);
+  }
+  let dat = await res.json();
+
+  console.log("DATA", dat);
+
+  return dat;
+}
+
 export async function checkProgress(token: string, task_id: string) {
   let headers = { Authorization: `Bearer ${token}` };
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
   var url = `${backendURL}/status/${task_id}`;
+  let res = await fetch(url, { headers });
+  return await res.json();
+}
+
+export async function getResults(token: string, source: string) {
+  let headers = { Authorization: `Bearer ${token}` };
+  let backendURL = import.meta.env["VITE_BACKEND_URL"];
+  var url = `${backendURL}/results?source=${source}`;
   let res = await fetch(url, { headers });
   return await res.json();
 }

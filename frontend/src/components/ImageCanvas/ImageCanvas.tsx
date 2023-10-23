@@ -10,17 +10,27 @@ import {
 import { setChartData } from "state/slices/chartSlice";
 import "./ImageCanvas.scss";
 import { loadTimeSeries } from "requests/flim";
-import { Card, CircularProgress, Typography } from "@mui/material";
+import {
+  ButtonGroup,
+  Card,
+  CircularProgress,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
 import auth0mockable from "../../auth0mockable";
+import { selectSelectedResult } from "state/slices/resultsSlice";
 
 export function ImageCanvas() {
   const [loaded, setLoaded] = React.useState(false);
   const [boxPos, setBoxPos] = React.useState<number[] | null>(null);
+  const [showCorrected, setShowCorrected] = React.useState(false);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const imageRef = React.useRef<HTMLImageElement>(null);
 
   const imageSrc = useAppSelector(selectImageSrc);
   const currentImage = useAppSelector(selectCurrentImage);
+  const currentResult = useAppSelector(selectSelectedResult);
   const excluded = useAppSelector(selectExcludedFrames);
   const channel = useAppSelector(selectChannel);
   const dispatch = useAppDispatch();
@@ -30,6 +40,14 @@ export function ImageCanvas() {
   React.useEffect(() => {
     setLoaded(false);
   }, [imageSrc, excluded, channel]);
+
+  React.useEffect(() => {
+    if (currentResult) {
+      setShowCorrected(true);
+    } else {
+      setShowCorrected(false);
+    }
+  }, [currentResult]);
 
   React.useEffect(() => {
     if (loaded) {
@@ -48,14 +66,16 @@ export function ImageCanvas() {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     setBoxPos([x - 5, y - 5]);
-    loadTimeSeries(token, {
-      x,
-      y,
-      source: currentImage || "",
-      channel: channel,
-    }).then((ts) => {
-      dispatch(setChartData(ts));
-    });
+    if (imageSrc) {
+      loadTimeSeries(token, {
+        x,
+        y,
+        source: (currentImage || "") + ".npy",
+        channel: channel,
+      }).then((ts) => {
+        dispatch(setChartData(ts));
+      });
+    }
   }
 
   return (
@@ -115,6 +135,19 @@ export function ImageCanvas() {
           style={{ display: "none" }}
         />
       </div>
+      <ToggleButtonGroup
+        color="primary"
+        size="small"
+        value={showCorrected ? "corrected" : "original"}
+        onChange={(e) => {
+          setShowCorrected(e.target.value == "corrected");
+        }}
+      >
+        <ToggleButton value="original">Original</ToggleButton>
+        <ToggleButton disabled={!currentResult} value="corrected">
+          Corrected
+        </ToggleButton>
+      </ToggleButtonGroup>
     </Card>
   );
 }

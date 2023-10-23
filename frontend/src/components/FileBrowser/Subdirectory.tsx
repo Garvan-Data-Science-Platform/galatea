@@ -27,6 +27,8 @@ interface DirectoryI {
 interface SubdirectoryProps {
   name?: string;
   bucket: string;
+  extensions?: string[];
+  combine?: boolean;
   parent?: string;
   level: number;
   onClickFile?: (file: BucketFile, ls: string[]) => void;
@@ -37,6 +39,7 @@ interface SubdirectoryProps {
 export interface BucketFile {
   name: string;
   url: string;
+  extensions?: string[];
 }
 
 export function Subdirectory(props: SubdirectoryProps) {
@@ -63,6 +66,33 @@ export function Subdirectory(props: SubdirectoryProps) {
     }
   };
 
+  function filterExtensionsAndCombine(files: BucketFile[]) {
+    let result: BucketFile[] = [];
+    let fnames: string[] = [];
+    for (var i in files) {
+      if (props.extensions) {
+        props.extensions.forEach((ext) => {
+          if (files[i].name.slice(-1 * ext.length).includes(ext)) {
+            if (props.combine) {
+              let newFile = { ...files[i] };
+              newFile.name = newFile.name.replace(ext, "");
+              if (!fnames.includes(newFile.name)) {
+                newFile.extensions
+                  ? newFile.extensions.push(ext)
+                  : (newFile.extensions = [ext]);
+                result.push(newFile);
+                fnames.push(newFile.name);
+              }
+            } else {
+              result.push(files[i]);
+            }
+          }
+        });
+      }
+    }
+    return result;
+  }
+
   const load = async () => {
     let token = await getAccessTokenSilently();
 
@@ -74,7 +104,7 @@ export function Subdirectory(props: SubdirectoryProps) {
         limit: 50,
       });
     } catch (e) {
-      setAlertMessage(e);
+      setAlertMessage(String(e));
       return;
     }
 
@@ -174,7 +204,7 @@ export function Subdirectory(props: SubdirectoryProps) {
               setSelectedFolder={props.setSelectedFolder}
             />
           ))}
-          {files.map((v, idx) => (
+          {filterExtensionsAndCombine(files).map((v, idx) => (
             <ListItemButton
               sx={{ pl: 2 * props.level }}
               key={`${v}_${idx}`}

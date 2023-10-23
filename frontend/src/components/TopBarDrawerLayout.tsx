@@ -27,11 +27,9 @@ interface AppBarProps extends MuiAppBarProps {
 
 interface TopBarDrawerLayoutProps {
   sidebarContent: React.ReactNode;
-  children: React.ReactNode;
 }
 
 export default function TopBarDrawerLayout({
-  children,
   sidebarContent,
 }: TopBarDrawerLayoutProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -74,7 +72,7 @@ export default function TopBarDrawerLayout({
   })<{
     open?: boolean;
   }>(({ theme, open }) => ({
-    flexGrow: 1,
+    width: theme.spacing(3),
     padding: theme.spacing(3),
     transition: theme.transitions.create("margin", {
       easing: theme.transitions.easing.sharp,
@@ -121,10 +119,7 @@ export default function TopBarDrawerLayout({
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Galatea{" "}
-            {currentImage
-              ? "- " + currentImage.split("/").at(-1)?.replace(".npy", "")
-              : ""}
+            Galatea {currentImage ? "- " + currentImage.split("/").at(-1) : ""}
           </Typography>
           <div>
             <IconButton
@@ -193,9 +188,7 @@ export default function TopBarDrawerLayout({
 
         {sidebarContent}
       </Drawer>
-      <Main sx={{ marginTop: 2, backgroundColor: "#f3f6f9" }} open={open}>
-        {children}
-      </Main>
+      <Main open={open}></Main>
     </>
   );
 }
