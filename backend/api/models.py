@@ -14,3 +14,15 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+class Result(models.Model):
+    task_id = models.CharField(max_length=100, primary_key=True)
+    completed = models.BooleanField()
+    source = models.CharField(max_length=300)
+    channel = models.IntegerField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    local_algorithm = models.CharField(max_length=100, null=True)
+    global_algorithm = models.CharField(max_length=100, null=True)
+    local_params = models.JSONField(null=True)
+    global_params = models.JSONField(null=True)

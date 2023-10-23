@@ -1,6 +1,7 @@
 from celery import Celery
 import numpy as np
 import os
+from pathlib import Path
 
 app = Celery('tasks')
 
@@ -20,7 +21,23 @@ BUCKET_FOLDER = 'bucket'
 if os.getenv('DEV') == 'true':
     flim_ds = '/home/tim/projects/galatea/working/test_flim.npy'
     BUCKET_FOLDER = 'working'
-    CORRECTED = "04b200dd-271d-4cd0-beda-cfce1af0c7d3"
+    CORRECTED = "RhoA ms881 intenstine 1000Hz unidirectional/044bb779-5c12-4058-a1eb-d22df4837acb"
+    # Mock bucket
+    from google.cloud import storage
+
+    def write_to_file(self, file):
+        print("USING MOCKED BUCKET")
+        from urllib.parse import unquote
+        fname = unquote(self.path)
+        fname = fname.replace("/b/galatea/o/", "/app/working/")
+        dir = Path(fname).parent.absolute()
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        print("FNAME", fname)
+        with open(fname, 'wb') as f:
+            f.write(file.read())
+    storage.Blob.upload_from_file = write_to_file
 
 
 @app.task(bind=True)
@@ -43,7 +60,7 @@ def convert_pt(self, input_file):
     blob = bucket.blob(output_file)
     outfile = TemporaryFile()
     print("Converting")
-    flim_data_stack, meta = load_ptfile(f"/app/bucket/{input_file}")
+    flim_data_stack, meta = load_ptfile(f"/app/{BUCKET_FOLDER}/{input_file}")
     print("Finished conversion, uploading")
 
     np.save(outfile, flim_data_stack)
@@ -118,7 +135,7 @@ def get_frame(source, channel, idx):
 @app.task()
 def get_frame_corrected(result_id, idx):
     result_id = CORRECTED
-    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_id}-corrected.npy', mmap_mode='r')
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_id}-corrected.results', mmap_mode='r')
     dat = np.clip(100*d1[:, :, idx], 0, 255).astype(np.uint8)
     return dat
 
@@ -126,22 +143,39 @@ def get_frame_corrected(result_id, idx):
 @app.task(bind=True)
 def apply_correction(self, source, channel, reference_frame, local_algorithm, local_params, global_algorithm, global_params):
     from motion_correction import calculate_correction, get_intensity_stack
+    from motion_correction.algorithms import Phase, Morphic, OpticalILK, OpticalPoly, OpticalTVL1
+
+    alg_map = {
+        'phase': Phase,
+        'morphic': Morphic,
+        'optical_ILK': OpticalILK,
+        'optical_poly': OpticalPoly,
+        'optical_TVL1': OpticalTVL1,
+    }
+
+    if global_algorithm:
+        global_algorithm = alg_map[global_algorithm](**(global_params or {}))
+
+    if local_algorithm:
+        local_algorithm = alg_map[local_algorithm](**(local_params or {}))
 
     d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}')
     stack = get_intensity_stack(d1, channel)
 
-    results = calculate_correction(stack, reference_frame, local_algorithm, local_params, global_algorithm, global_params)
+    results = calculate_correction(stack, reference_frame, local_algorithm,  global_algorithm)
     print("Finished correction, saving results")
 
     id = self.request.id
 
     self.update_state(state='UPLOAD STARTED')
 
-    upload(results['global_corrected_intensity_data_stack'], f"results/{id}-global-corrected.npy", 'np')
-    upload(results['corrected_intensity_data_stack'], f"results/{id}-corrected.npy", 'np')
+    name = source.replace(".npy", "")
+
+    upload(results['global_corrected_intensity_data_stack'], f"results/{name}/{id}-global-corrected.results", 'np')
+    upload(results['corrected_intensity_data_stack'], f"results/{name}/{id}-corrected.results", 'np')
     del results['global_corrected_intensity_data_stack']
     del results['corrected_intensity_data_stack']
-    upload(results, f"results/{id}-results.p")
+    upload(results, f"results/{name}/{id}-results.p")
 
     print("Finished uploading")
 

@@ -1,5 +1,5 @@
 from io import BytesIO
-from ninja import NinjaAPI
+from ninja import NinjaAPI, Schema
 from ninja.errors import AuthenticationError, ValidationError
 from google.cloud import storage
 from galatea.auth import AuthBearer
@@ -14,6 +14,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from worker.tasks import convert_pt, get_frame, get_frame_corrected, get_timeseries, get_combined, get_frame_count, apply_correction, app as celery_app
 from celery.result import AsyncResult
+from .models import Result
 
 
 api = NinjaAPI()
@@ -28,6 +29,38 @@ BUCKET_FOLDER = 'bucket'
 if settings.DEBUG:
     flim_ds = '/home/tim/projects/galatea/working/test_flim.npy'
     BUCKET_FOLDER = 'working'
+    import os
+
+    class MockBucket(list):
+        def __init__(self, ls):
+            super().__init__(ls)
+            self.prefixes = []
+            to_rem = []
+            for b in ls:
+                if os.path.isdir(f'/app/working/{b.name}'):
+                    self.prefixes.append(b.name)
+                    to_rem.append(b)
+            for b in to_rem:
+                print("removing", b)
+                self.remove(b)
+            print(self)
+
+    class MockBlob():
+        def __init__(self, name):
+            self.name = name
+            self.url = "dummy"
+
+        def __str__(self):
+            return self.name
+
+        def generate_signed_url(self, version, expiration, method):
+            return "dummy"
+
+    def mock_bucket(bucket, delimiter, prefix):
+        print("USING MOCK BUCKET")
+        return MockBucket([MockBlob(x) for x in os.listdir(f'/app/working/{prefix or ""}')])
+
+    storage_client.list_blobs = mock_bucket
 
 
 @api.get('/')
@@ -127,6 +160,26 @@ def task_status(request, task_id):
     return {"state": res.state, "info": res.info}
 
 
+class ResultOut(Schema):
+    task_id: str
+    completed: bool
+    source: str
+    channel: int
+    timestamp: datetime.datetime
+    local_algorithm: str = None
+    global_algorithm: str = None
+    local_params: dict = None
+    global_params: dict = None
+
+
+@api.get('/results', response=List[ResultOut])
+def list_results(request, source):
+
+    res = Result.objects.filter(source=source)
+
+    return res
+
+
 @api.get('/convert')
 def convert(request, filename):
 
@@ -184,9 +237,20 @@ def timeseries(request, source, channel: int, x: int, y: int, excluded=None, box
 
 
 @api.post('/apply-correction')
-def correction(request, source, channel: int, reference_frame=0, local_algorithm=None, local_params=None, global_algorithm=None, global_params=None):
+def correction(request, source, channel: int, reference_frame=0, local_algorithm=None, global_algorithm=None):
+    import json
+    if local_algorithm == "none":
+        local_algorithm = None
+    if global_algorithm == "none":
+        global_algorithm = None
+
+    local_params = json.loads(request.body)["local_params"]
+    global_params = None
 
     res = apply_correction.delay(source, channel, reference_frame, local_algorithm, local_params, global_algorithm, global_params)
+    r = Result(task_id=res.id, completed=False, source=source, local_algorithm=local_algorithm,
+               global_algorithm=global_algorithm, local_params=local_params)
+    r.save()
 
     return {"status": "ok", "task_id": res.id}
 

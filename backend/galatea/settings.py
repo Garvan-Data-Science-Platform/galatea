@@ -30,6 +30,8 @@ ALLOWED_HOSTS = ['*']
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+TIME_ZONE = 'Australia/Melbourne'
+
 
 # Application definition
 
