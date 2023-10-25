@@ -23,10 +23,14 @@ export const chartSlice = createSlice({
     setChartFrame: (state, action: PayloadAction<number>) => {
       state.frame = action.payload;
     },
+    clearChartData: (state) => {
+      state.data = initialState.data;
+    },
   },
 });
 
-export const { setChartData, setChartFrame } = chartSlice.actions;
+export const { setChartData, setChartFrame, clearChartData } =
+  chartSlice.actions;
 
 // The function below is called a selector and allows us to select a value from
 // the state. Selectors can also be defined inline where they're used instead of

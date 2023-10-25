@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image, ImageOps
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
-from worker.tasks import convert_pt, get_frame, get_frame_corrected, get_timeseries, get_combined, get_frame_count, apply_correction, app as celery_app
+from worker.tasks import correct_flim, convert_pt, get_frame, get_frame_corrected, get_timeseries, get_timeseries_corrected, get_combined, get_combined_corrected, get_frame_count, apply_correction, app as celery_app
 from celery.result import AsyncResult
 from .models import Result
 
@@ -163,6 +163,7 @@ def task_status(request, task_id):
 class ResultOut(Schema):
     task_id: str
     completed: bool
+    flim_adjusted: bool
     source: str
     channel: int
     timestamp: datetime.datetime
@@ -189,22 +190,47 @@ def convert(request, filename):
 
 
 @api.get('/frame/{idx}')
-def frame(request, idx: int, source, channel: int):
+def frame(request, idx: int, source, channel: int, colour=None):
+
     res = get_frame.delay(source, channel, idx)
     dat = res.get()
     img = Image.fromarray(dat, "L")
 
-    # img = ImageOps.colorize(img, black='cyan', white='red', mid='purple')
+    if colour is None:
+        colour = 'white'
+    img = ImageOps.colorize(img, black='black', white=colour)
+    img = img.convert("RGBA")
+
+    width, height = img.size
+
+    pixdata = img.load()
+
+    for y in range(height):
+        for x in range(width):
+            if pixdata[x, y] == (0, 0, 0, 255):
+                pixdata[x, y] = (255, 255, 255, 0)
+
+    #
     return serve_pil_image(img)
 
 
-@api.get('/frame-corrected/{result_id}/{idx}')
+@api.get('/frame-corrected/{idx}')
 def frame_corrected(request, idx: int, result_id):
     res = get_frame_corrected.delay(result_id, idx)
     dat = res.get()
     img = Image.fromarray(dat, "L")
+    img = ImageOps.colorize(img, black='black', white='red')
+    img = img.convert("RGBA")
 
-    # img = ImageOps.colorize(img, black='cyan', white='red', mid='purple')
+    width, height = img.size
+
+    pixdata = img.load()
+
+    for y in range(height):
+        for x in range(width):
+            if pixdata[x, y] == (0, 0, 0, 255):
+                pixdata[x, y] = (255, 255, 255, 0)
+
     return serve_pil_image(img)
 
 
@@ -214,6 +240,18 @@ def combined(request, source, channel: int, excluded=None):
     -***excluded***: ABC
     '''
     res = get_combined.delay(source, channel, excluded)
+    dat = res.get()
+    img = Image.fromarray(dat, "L")
+    # img = ImageOps.colorize(img, black='cyan', white='red', mid='purple')
+    return serve_pil_image(img)
+
+
+@api.get('/combined-corrected')
+def combined_corrected(request, result_id, excluded=None):
+    '''
+    -***excluded***: ABC
+    '''
+    res = get_combined_corrected.delay(result_id, excluded)
     dat = res.get()
     img = Image.fromarray(dat, "L")
     # img = ImageOps.colorize(img, black='cyan', white='red', mid='purple')
@@ -236,6 +274,13 @@ def timeseries(request, source, channel: int, x: int, y: int, excluded=None, box
     return {'data': dat}
 
 
+@api.get('/ts-corrected/{x}/{y}')
+def timeseries_corrected(request, result_id, channel: int, x: int, y: int, excluded=None, box=5):
+    res = get_timeseries_corrected.delay(result_id, channel, x, y, excluded, box)
+    dat = res.get()
+    return {'data': dat}
+
+
 @api.post('/apply-correction')
 def correction(request, source, channel: int, reference_frame=0, local_algorithm=None, global_algorithm=None):
     import json
@@ -248,11 +293,29 @@ def correction(request, source, channel: int, reference_frame=0, local_algorithm
     global_params = None
 
     res = apply_correction.delay(source, channel, reference_frame, local_algorithm, local_params, global_algorithm, global_params)
-    r = Result(task_id=res.id, completed=False, source=source, local_algorithm=local_algorithm,
+    r = Result(task_id=res.id, completed=False, source=source, channel=channel, local_algorithm=local_algorithm,
                global_algorithm=global_algorithm, local_params=local_params)
     r.save()
 
     return {"status": "ok", "task_id": res.id}
+
+
+@api.post('/correct-flim')
+def correct_flim_view(request, source, result_id):
+
+    res = correct_flim.delay(source, result_id)
+
+    return {"status": "ok", "task_id": res.id}
+
+
+@api.post('/flim-applied')
+def flim_applied(request, result_id):
+
+    r = Result.objects.get(task_id=result_id)
+    r.flim_adjusted = True
+    r.save()
+
+    return {"status": "ok"}
 
 
 def serve_pil_image(pil_img):

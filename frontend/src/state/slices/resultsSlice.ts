@@ -1,17 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-
-interface Result {
-  task_id: string;
-  completed: boolean;
-  source: string;
-  channel: number;
-  timestamp: Date;
-  local_algorithm: string;
-  global_algorithm: string;
-  local_params: Map<string, string>;
-  global_params: Map<string, string>;
-}
+import type { Result } from "../../requests/flim";
 
 export interface ResultsState {
   results: Result[];
@@ -31,6 +20,11 @@ export const resultsSlice = createSlice({
     setResults: (state, action: PayloadAction<Result[]>) => {
       state.results = action.payload;
     },
+    setResultFlimAdjusted: (state) => {
+      state.results.filter(
+        (val) => val.task_id == state.selected
+      )[0].flim_adjusted = true;
+    },
     addResult: (state, action: PayloadAction<Result>) => {
       state.results.push(action.payload);
       state.selected = action.payload.task_id;
@@ -44,8 +38,13 @@ export const resultsSlice = createSlice({
   },
 });
 
-export const { setResults, addResult, setSelectedResult, deselectResult } =
-  resultsSlice.actions;
+export const {
+  setResults,
+  addResult,
+  setSelectedResult,
+  deselectResult,
+  setResultFlimAdjusted,
+} = resultsSlice.actions;
 
 // The function below is called a selector and allows us to select a value from
 // the state. Selectors can also be defined inline where they're used instead of

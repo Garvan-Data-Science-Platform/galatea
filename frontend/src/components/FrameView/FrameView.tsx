@@ -6,6 +6,7 @@ import {
   selectExcludedFrames,
   selectFrameCount,
   selectImageSrc,
+  selectReferenceFrame,
   setCurrentImage,
   setSrc,
   toggleExcludedFrame,
@@ -23,6 +24,7 @@ import {
   CircularProgress,
   FormControlLabel,
   Grid,
+  Modal,
   Paper,
   Slider,
   Tooltip,
@@ -30,51 +32,50 @@ import {
 } from "@mui/material";
 import { QuestionMark, TrendingUpRounded } from "@mui/icons-material";
 import { current } from "@reduxjs/toolkit";
+import { selectSelectedResult } from "state/slices/resultsSlice";
 
 export function FrameView() {
-  const [imageSrc, setImageSrc] = React.useState({
-    original:
-      "https://upload.wikimedia.org/wikipedia/commons/9/9a/512x512_Dissolve_Noise_Texture.png?20200626210716",
-    local:
-      "https://upload.wikimedia.org/wikipedia/commons/9/9a/512x512_Dissolve_Noise_Texture.png?20200626210716",
-    global:
-      "https://upload.wikimedia.org/wikipedia/commons/9/9a/512x512_Dissolve_Noise_Texture.png?20200626210716",
-    combined:
-      "https://upload.wikimedia.org/wikipedia/commons/9/9a/512x512_Dissolve_Noise_Texture.png?20200626210716",
-  });
+  const [imageSrc, setImageSrc] = React.useState<string | null>(null);
+  const [correctedSrc, setCorrectedSrc] = React.useState<string | null>(null);
+  const [referenceSrc, setReferenceSrc] = React.useState<string | null>(null);
 
   const dispatch = useAppDispatch();
   const currentImage = useAppSelector(selectCurrentImage);
   const frameCount = useAppSelector(selectFrameCount);
   const excluded = useAppSelector(selectExcludedFrames);
   const channel = useAppSelector(selectChannel);
+  const referenceFrame = useAppSelector(selectReferenceFrame);
+  const result = useAppSelector(selectSelectedResult);
   const sliderRef = React.useRef();
   const [sliderVal, setSliderVal] = React.useState(1);
+  const [display, setDisplay] = React.useState({
+    original: true,
+    corrected: true,
+    reference: true,
+  });
 
-  const resultID = "044bb779-5c12-4058-a1eb-d22df4837acb";
-  const resultReady = true;
+  const resultID = result;
 
   const onSliderChange = (e, val) => {
-    setImageSrc((state) => {
-      setSliderVal(val);
-      return {
-        ...state,
-        original: `${import.meta.env.VITE_BACKEND_URL}/frame/${
-          val - 1 // index starting at 1 not 0
-        }?source=${currentImage}.npy`,
-      };
-    });
+    setSliderVal(val);
 
-    if (resultReady) {
-      setImageSrc((state) => {
-        return {
-          ...state,
-          combined: `${
-            import.meta.env.VITE_BACKEND_URL
-          }/frame-corrected/${resultID}/${val - 1}`,
-        };
-      });
+    if (resultID) {
+      setCorrectedSrc(
+        `${import.meta.env.VITE_BACKEND_URL}/frame-corrected/${
+          val - 1
+        }?result_id=${currentImage}/${resultID}`
+      );
     }
+    setImageSrc(
+      `${import.meta.env.VITE_BACKEND_URL}/frame/${
+        val - 1 // index starting at 1 not 0
+      }?source=${currentImage}`
+    );
+    setReferenceSrc(
+      `${import.meta.env.VITE_BACKEND_URL}/frame/${
+        referenceFrame // index starting at 1 not 0
+      }?source=${currentImage}&colour=cyan`
+    );
   };
 
   //Prevents image prefetching bug with firefox causing image to load twice
@@ -89,96 +90,142 @@ export function FrameView() {
   React.useEffect(() => {
     if (currentImage) {
       sliderRef.current.value = 1;
-      setImageSrc((state) => {
-        return {
-          ...state,
-          original: `${
-            import.meta.env.VITE_BACKEND_URL
-          }/frame/1?source=${currentImage}.npy`,
-        };
-      });
+      setImageSrc(
+        `${import.meta.env.VITE_BACKEND_URL}/frame/0?source=${currentImage}`
+      );
+      setReferenceSrc(
+        `${import.meta.env.VITE_BACKEND_URL}/frame/${
+          referenceFrame // index starting at 1 not 0
+        }?source=${currentImage}&colour=cyan`
+      );
     }
   }, [currentImage]);
 
   React.useEffect(() => {
-    if (resultReady) {
-      setImageSrc((state) => {
-        return {
-          ...state,
-          combined: `${
-            import.meta.env.VITE_BACKEND_URL
-          }/frame-corrected/${resultID}/1`,
-        };
-      });
+    if (resultID && currentImage) {
+      setCorrectedSrc(
+        `${import.meta.env.VITE_BACKEND_URL}/frame-corrected/${
+          sliderVal - 1
+        }?result_id=${currentImage}/${resultID}`
+      );
+    } else {
+      setCorrectedSrc(null);
     }
-  }, [resultReady]);
+  }, [resultID]);
 
   return (
     <Paper style={{ padding: 5 }}>
-      <Box style={{ position: "relative", width: 604 }}>
-        <Typography
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: 300,
-            backgroundColor: "imageTextBackground",
+      <Box style={{ position: "relative" }}>
+        <div
+          style={{
+            width: 512,
+            height: 512,
+            position: "relative",
+            backgroundColor: "black",
           }}
         >
-          Original
-        </Typography>
-        <Typography
-          sx={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            width: 300,
-            backgroundColor: "imageTextBackground",
-          }}
-        >
-          Local Correction
-        </Typography>
-        <img
-          width={300}
-          height={300}
-          ref={addSrc(imageSrc.original + `&channel=${channel}`)}
-          key={imageSrc.original}
-          style={{ marginRight: 4, backgroundColor: "grey" }}
-        />
-        <img width={300} height={300} src={imageSrc.local} />
-      </Box>
-      <Box sx={{ position: "relative" }}>
-        <Typography
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: 300,
-            backgroundColor: "imageTextBackground",
-          }}
-        >
-          Global Correction
-        </Typography>
-        <Typography
-          sx={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            width: 300,
-            backgroundColor: "imageTextBackground",
-          }}
-        >
-          Local + Global Correction
-        </Typography>
-        <img
-          width={300}
-          height={300}
-          src={imageSrc.global}
-          style={{ marginRight: 4 }}
-        />
-        <img width={300} height={300} src={imageSrc.combined} />
+          {display.original && imageSrc ? (
+            <img
+              width={512}
+              height={512}
+              ref={addSrc(imageSrc + `&channel=${channel}`)}
+              key={imageSrc}
+              style={{ position: "absolute", top: 0, left: 0 }}
+            />
+          ) : null}
+          {display.reference && imageSrc ? (
+            <img
+              width={512}
+              height={512}
+              ref={addSrc(referenceSrc + `&channel=${channel}&colour=cyan`)}
+              key={referenceSrc + "ref"}
+              style={{ position: "absolute", top: 0, left: 0 }}
+            />
+          ) : null}
+
+          {correctedSrc && display.corrected ? (
+            <img
+              width={512}
+              height={512}
+              ref={addSrc(correctedSrc)}
+              key={correctedSrc}
+              style={{ position: "absolute", top: 0, left: 0 }}
+            />
+          ) : null}
+          <div
+            style={{
+              bottom: 4,
+              left: 0,
+              width: 100,
+              height: 55,
+              position: "absolute",
+              backgroundColor: "black",
+            }}
+          >
+            <Typography sx={{ fontSize: 12, color: "white" }}>
+              Original
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: "red" }}>
+              Corrected
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: "cyan" }}>
+              Reference Frame
+            </Typography>
+          </div>
+        </div>
+        <div style={{ top: 0, width: "100%", position: "absolute" }}>
+          <Typography sx={{ backgroundColor: "imageTextBackground" }}>
+            Repetitions (frames)
+          </Typography>
+        </div>
       </Box>
       <Box sx={{ padding: 2 }}>
+        <Typography>Display</Typography>
+        <FormControlLabel
+          control={
+            <Checkbox
+              //defaultChecked
+              checked={display.original}
+              disabled={!imageSrc}
+              onChange={(e) => {
+                setDisplay((state) => {
+                  return { ...state, original: !state.original };
+                });
+              }}
+            />
+          }
+          label="Original"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              //defaultChecked
+              checked={display.corrected}
+              disabled={!correctedSrc}
+              onChange={(e) => {
+                setDisplay((state) => {
+                  return { ...state, corrected: !state.corrected };
+                });
+              }}
+            />
+          }
+          label="Corrected"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              //defaultChecked
+              checked={display.reference}
+              disabled={!imageSrc}
+              onChange={(e) => {
+                setDisplay((state) => {
+                  return { ...state, reference: !state.reference };
+                });
+              }}
+            />
+          }
+          label="Reference"
+        />
         <Typography>Repetition</Typography>
         <Slider
           defaultValue={1}

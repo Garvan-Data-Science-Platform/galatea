@@ -21,7 +21,7 @@ BUCKET_FOLDER = 'bucket'
 if os.getenv('DEV') == 'true':
     flim_ds = '/home/tim/projects/galatea/working/test_flim.npy'
     BUCKET_FOLDER = 'working'
-    CORRECTED = "RhoA ms881 intenstine 1000Hz unidirectional/044bb779-5c12-4058-a1eb-d22df4837acb"
+    CORRECTED = "RhoA ms881 intenstine 1000Hz unidirectional/0a36b28f-7796-4465-b367-b154aad53253"
     # Mock bucket
     from google.cloud import storage
 
@@ -82,7 +82,7 @@ def convert_pt(self, input_file):
 
 @app.task()
 def get_combined(source, channel, excluded):
-    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}', mmap_mode='r')
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}.npy', mmap_mode='r')
     ex = []
     if excluded:
         ex = [int(i) for i in excluded.split(',')]
@@ -92,19 +92,22 @@ def get_combined(source, channel, excluded):
 
 
 @app.task()
-def get_combined_corrected(source, excluded):
-    d1 = '/app/{BUCKET_FOLDER}/{CORRECTED}'
+def get_combined_corrected(result_id, excluded):
+
     ex = []
     if excluded:
         ex = [int(i) for i in excluded.split(',')]
-    idx = [i for i in range(d1.shape[3]) if i not in ex]
-    dat = np.clip(10*d1[:, :, channel, idx, :].sum(axis=(2, 3)), 0, 255).astype(np.uint8)
+
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_id}-corrected.results', mmap_mode='r')
+    idx = [i for i in range(d1.shape[2]) if i not in ex]
+
+    dat = np.clip(10*d1[:, :, idx].sum(axis=(2,)), 0, 255).astype(np.uint8)
     return dat
 
 
 @app.task()
 def get_frame_count(source):
-    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}', mmap_mode='r')  # , np.int8, 'r', shape=(512, 512, 3, 20, 133))
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}.npy', mmap_mode='r')  # , np.int8, 'r', shape=(512, 512, 3, 20, 133))
     return d1.shape[-2]
 
 
@@ -116,7 +119,24 @@ def get_timeseries(source, channel, x, y, excluded=None, box=5):
     ymin = max(y - box_add, 0)
     ymax = min(y + box_add + 1, 512)
 
-    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}', mmap_mode='r')
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}.npy', mmap_mode='r')
+    ex = []
+    if excluded:
+        ex = [int(i) for i in excluded.split(',')]
+    idx = [i for i in range(d1.shape[3]) if i not in ex]
+    dat = [int(i) for i in d1[ymin:ymax, xmin:xmax, channel, idx, :].sum(axis=(0, 1, 2))]
+    return dat
+
+
+@app.task()
+def get_timeseries_corrected(result_id, channel, x, y, excluded=None, box=5):
+    box_add = int(box/2)
+    xmin = max(x - box_add, 0)
+    xmax = min(x + box_add + 1, 512)
+    ymin = max(y - box_add, 0)
+    ymax = min(y + box_add + 1, 512)
+
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_id}-corrected-flim.results', mmap_mode='r')
     ex = []
     if excluded:
         ex = [int(i) for i in excluded.split(',')]
@@ -127,14 +147,14 @@ def get_timeseries(source, channel, x, y, excluded=None, box=5):
 
 @app.task()
 def get_frame(source, channel, idx):
-    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}', mmap_mode='r')
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}.npy', mmap_mode='r')
     dat = np.clip(100*d1[:, :, channel, idx, :].sum(axis=-1), 0, 255).astype(np.uint8)
     return dat
 
 
 @app.task()
 def get_frame_corrected(result_id, idx):
-    result_id = CORRECTED
+
     d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_id}-corrected.results', mmap_mode='r')
     dat = np.clip(100*d1[:, :, idx], 0, 255).astype(np.uint8)
     return dat
@@ -142,7 +162,7 @@ def get_frame_corrected(result_id, idx):
 
 @app.task(bind=True)
 def apply_correction(self, source, channel, reference_frame, local_algorithm, local_params, global_algorithm, global_params):
-    from motion_correction import calculate_correction, get_intensity_stack
+    from motion_correction import calculate_correction, get_intensity_stack, apply_correction_flim
     from motion_correction.algorithms import Phase, Morphic, OpticalILK, OpticalPoly, OpticalTVL1
 
     alg_map = {
@@ -159,25 +179,40 @@ def apply_correction(self, source, channel, reference_frame, local_algorithm, lo
     if local_algorithm:
         local_algorithm = alg_map[local_algorithm](**(local_params or {}))
 
-    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}')
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}.npy')
     stack = get_intensity_stack(d1, channel)
 
     results = calculate_correction(stack, reference_frame, local_algorithm,  global_algorithm)
+
     print("Finished correction, saving results")
 
     id = self.request.id
 
     self.update_state(state='UPLOAD STARTED')
 
-    name = source.replace(".npy", "")
-
-    upload(results['global_corrected_intensity_data_stack'], f"results/{name}/{id}-global-corrected.results", 'np')
-    upload(results['corrected_intensity_data_stack'], f"results/{name}/{id}-corrected.results", 'np')
+    upload(results['global_corrected_intensity_data_stack'], f"results/{source}/{id}-global-corrected.results", 'np')
+    upload(results['corrected_intensity_data_stack'], f"results/{source}/{id}-corrected.results", 'np')
     del results['global_corrected_intensity_data_stack']
     del results['corrected_intensity_data_stack']
-    upload(results, f"results/{name}/{id}-results.p")
+    upload(results, f"results/{source}/{id}-results.p")
 
     print("Finished uploading")
+
+
+@app.task(bind=True)
+def correct_flim(self, source, result_id):
+    import pickle
+    from motion_correction import apply_correction_flim
+
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/{source}.npy', mmap_mode='r')
+
+    results = pickle.load(open(f"/app/{BUCKET_FOLDER}/results/{source}/{result_id}-results.p", "rb"))
+
+    corrected_flim = apply_correction_flim(d1, results["combined_transforms"])
+
+    self.update_state(state='UPLOAD STARTED')
+
+    upload(corrected_flim, f"results/{source}/{result_id}-corrected-flim.results", 'np')
 
 
 def upload(file, path, mode='pickle'):

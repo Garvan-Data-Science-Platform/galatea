@@ -9,46 +9,67 @@ import {
   Box,
   Button,
   Card,
+  CircularProgress,
   Divider,
   FormControl,
   InputLabel,
   MenuItem,
+  Modal,
   Select,
   TextField,
+  Typography,
 } from "@mui/material";
 import {
   selectChannel,
   selectCurrentImage,
   setChannel,
+  selectReferenceFrame,
+  setReferenceFrame,
+  setCurrentImage,
 } from "state/slices/imageSlice";
-import { applyCorrection } from "requests/flim";
+import { applyCorrection, getResults, waitForTaskSuccess } from "requests/flim";
 import { algorithms } from "../../algorithms";
 import { useAuth0 } from "@auth0/auth0-react";
+import { setResults, setSelectedResult } from "state/slices/resultsSlice";
 Chart.register(...registerables);
 
 export function ParametersBox() {
   const [localAlg, setLocalAlg] = React.useState(algorithms.local[0]);
   const [globalAlg, setGlobalAlg] = React.useState(algorithms.global[0]);
-  const [referenceFrame, setReferenceFrame] = React.useState(1);
   const [localParams, setLocalParams] = React.useState({});
+  const [applying, setApplying] = React.useState(false);
 
   const channel = useAppSelector(selectChannel);
+  const referenceFrame = useAppSelector(selectReferenceFrame);
   const dispatch = useAppDispatch();
   const { getAccessTokenSilently } = useAuth0();
   const currentImg = useAppSelector(selectCurrentImage);
 
   const NUM_CHANNELS = 3;
 
+  async function loadResults() {
+    let token = await getAccessTokenSilently();
+    let results = await getResults(token, currentImg || "");
+    dispatch(setResults(results));
+  }
+
   const onApplyCorrectionClicked = async () => {
     let token = await getAccessTokenSilently();
-    applyCorrection(token, {
-      source: (currentImg || "") + ".npy",
+    setApplying(true);
+
+    let task_id = await applyCorrection(token, {
+      source: currentImg || "",
       reference_frame: referenceFrame,
       channel: channel,
       global_algorithm: globalAlg.id,
       local_algorithm: localAlg.id,
       local_params: localParams,
     });
+
+    await waitForTaskSuccess(token, task_id);
+    await loadResults();
+    setApplying(false);
+    dispatch(setSelectedResult(task_id));
   };
 
   React.useEffect(() => {
@@ -58,9 +79,6 @@ export function ParametersBox() {
     }
     setLocalParams(params);
   }, [localAlg]);
-  React.useEffect(() => {
-    console.log("PARAMS", localParams);
-  }, [localParams]);
 
   return (
     <Card style={{ width: 250, padding: 20 }}>
@@ -87,7 +105,9 @@ export function ParametersBox() {
           label="Reference frame"
           type="number"
           defaultValue={1}
-          onChange={setReferenceFrame}
+          onChange={(e) => {
+            dispatch(setReferenceFrame(Number(e.target.value)));
+          }}
           InputLabelProps={{
             shrink: true,
           }}
@@ -164,6 +184,25 @@ export function ParametersBox() {
       >
         Apply Correction
       </Button>
+      <Modal open={applying}>
+        <Box
+          sx={{
+            position: "absolute" as "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            border: "2px solid #000",
+            boxShadow: 24,
+            p: 4,
+            textAlign: "center",
+          }}
+        >
+          <Typography>Applying Correction</Typography>
+          <CircularProgress sx={{ marginTop: 2 }} />
+        </Box>
+      </Modal>
     </Card>
   );
 }

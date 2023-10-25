@@ -23,6 +23,31 @@ export async function loadTimeSeries(
   return dat.data;
 }
 
+interface LoadTimeSeriesCorrectedProps {
+  result_id: string;
+  channel: number;
+  x: number;
+  y: number;
+}
+
+export async function loadTimeSeriesCorrected(
+  token: string,
+  props: LoadTimeSeriesCorrectedProps
+): Promise<any> {
+  let headers = { Authorization: `Bearer ${token}` };
+  let backendURL = import.meta.env["VITE_BACKEND_URL"];
+  let x = Math.round(props.x);
+  let y = Math.round(props.y);
+  var url = `${backendURL}/ts-corrected/${x}/${y}?result_id=${props.result_id}&channel=${props.channel}`;
+
+  let res = await fetch(url, { headers });
+  if (!res.ok) {
+    return Promise.reject("Server error: " + res.statusText);
+  }
+  let dat = await res.json();
+  return dat.data;
+}
+
 export async function convertPTFile(token: string, path: string) {
   let headers = { Authorization: `Bearer ${token}` };
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
@@ -89,9 +114,7 @@ export async function applyCorrection(
   }
   let dat = await res.json();
 
-  console.log("DATA", dat);
-
-  return dat;
+  return dat.task_id;
 }
 
 export async function checkProgress(token: string, task_id: string) {
@@ -102,12 +125,49 @@ export async function checkProgress(token: string, task_id: string) {
   return await res.json();
 }
 
-export async function getResults(token: string, source: string) {
+export interface Result {
+  task_id: string;
+  completed: boolean;
+  flim_adjusted: boolean;
+  source: string;
+  channel: number;
+  timestamp: Date;
+  local_algorithm?: string;
+  global_algorithm?: string;
+  local_params?: Map<string, number>;
+  global_params?: Map<string, number>;
+}
+
+export async function getResults(
+  token: string,
+  source: string
+): Promise<Result[]> {
   let headers = { Authorization: `Bearer ${token}` };
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
   var url = `${backendURL}/results?source=${source}`;
   let res = await fetch(url, { headers });
   return await res.json();
+}
+
+export async function correctFlim(
+  token: string,
+  source: string,
+  result_id: string
+): Promise<string> {
+  let headers = { Authorization: `Bearer ${token}` };
+  let backendURL = import.meta.env["VITE_BACKEND_URL"];
+  var url = `${backendURL}/correct-flim?source=${source}&result_id=${result_id}`;
+  let res = await fetch(url, { headers, method: "POST" });
+  let dat = await res.json();
+  return dat.task_id;
+}
+
+export async function setFlimCorrected(token: string, result_id: string) {
+  let headers = { Authorization: `Bearer ${token}` };
+  let backendURL = import.meta.env["VITE_BACKEND_URL"];
+  var url = `${backendURL}/flim-applied?result_id=${result_id}`;
+  let res = await fetch(url, { headers, method: "POST" });
+  let dat = await res.json();
 }
 
 export async function waitForTaskSuccess(token: string, task_id: string) {

@@ -68,7 +68,7 @@ function FileBrowser(props: FileBrowserProps) {
 
   async function loadResults() {
     let token = await getAccessTokenSilently();
-    let results = await getResults(token, currentImage + ".npy");
+    let results = await getResults(token, currentImage || "");
     console.log("RESULTS", results);
     dispatch(setResults(results));
   }
@@ -79,16 +79,22 @@ function FileBrowser(props: FileBrowserProps) {
     }
   }, [currentImage]);
 
-  React.useEffect(() => {
-    console.log("DESELECTING");
-    dispatch(deselectResult());
-  }, [channel, currentImage]);
+  const filtered = results.filter((v) => v.task_id == selected);
 
   React.useEffect(() => {
-    if (selected) {
-      dispatch(
-        setChannel(results.filter((v) => v.task_id == selected)[0].channel)
-      );
+    console.log("DESELECTING");
+    if (selected && filtered.length > 0 && channel != filtered[0].channel) {
+      dispatch(deselectResult());
+    }
+  }, [channel]);
+
+  React.useEffect(() => {
+    dispatch(deselectResult());
+  }, [currentImage]);
+
+  React.useEffect(() => {
+    if (selected && filtered.length > 0) {
+      dispatch(setChannel(filtered[0].channel));
     }
   }, [selected]);
 
@@ -133,7 +139,7 @@ function FileBrowser(props: FileBrowserProps) {
                 (val.global_algorithm
                   ? " Global: " +
                     val.global_algorithm +
-                    String(val.global_params)
+                    String(val.global_params || "")
                   : " Global: None") +
                 (val.local_algorithm
                   ? " Local: " +

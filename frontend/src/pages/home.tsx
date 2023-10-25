@@ -55,14 +55,7 @@ const Home = () => {
                   console.log("Setting active image", f.name);
                   dispatch(setCurrentImage(f.name));
                   dispatch(resetExcludedFrames());
-                  dispatch(
-                    setSrc(
-                      `${import.meta.env.VITE_BACKEND_URL}/combined?source=${
-                        f.name
-                      }.npy`
-                    )
-                  );
-                  let count = await getFrameCount(token, f.name + ".npy");
+                  let count = await getFrameCount(token, f.name);
                   dispatch(setFrameCount(count));
                 }
               }}
