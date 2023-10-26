@@ -24,7 +24,7 @@ export async function loadTimeSeries(
 }
 
 interface LoadTimeSeriesCorrectedProps {
-  result_id: string;
+  result_path: string;
   channel: number;
   x: number;
   y: number;
@@ -38,7 +38,24 @@ export async function loadTimeSeriesCorrected(
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
   let x = Math.round(props.x);
   let y = Math.round(props.y);
-  var url = `${backendURL}/ts-corrected/${x}/${y}?result_id=${props.result_id}&channel=${props.channel}`;
+  var url = `${backendURL}/ts-corrected/${x}/${y}?result_path=${props.result_path}&channel=${props.channel}`;
+
+  let res = await fetch(url, { headers });
+  if (!res.ok) {
+    return Promise.reject("Server error: " + res.statusText);
+  }
+  let dat = await res.json();
+  return dat.data;
+}
+
+export async function loadMetrics(
+  token: string,
+  result_path: string
+): Promise<any> {
+  let headers = { Authorization: `Bearer ${token}` };
+  let backendURL = import.meta.env["VITE_BACKEND_URL"];
+
+  var url = `${backendURL}/metrics?result_path=${result_path}`;
 
   let res = await fetch(url, { headers });
   if (!res.ok) {

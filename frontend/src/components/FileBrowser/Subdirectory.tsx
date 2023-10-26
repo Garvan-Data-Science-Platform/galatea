@@ -88,6 +88,8 @@ export function Subdirectory(props: SubdirectoryProps) {
             }
           }
         });
+      } else {
+        result.push(files[i]);
       }
     }
     return result;

@@ -92,17 +92,26 @@ def get_combined(source, channel, excluded):
 
 
 @app.task()
-def get_combined_corrected(result_id, excluded):
+def get_combined_corrected(result_path, excluded):
 
     ex = []
     if excluded:
         ex = [int(i) for i in excluded.split(',')]
 
-    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_id}-corrected.results', mmap_mode='r')
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_path}-corrected.results', mmap_mode='r')
     idx = [i for i in range(d1.shape[2]) if i not in ex]
 
     dat = np.clip(10*d1[:, :, idx].sum(axis=(2,)), 0, 255).astype(np.uint8)
     return dat
+
+
+@app.task()
+def get_metrics(result_path):
+    import pickle
+
+    results = pickle.load(open(f"/app/{BUCKET_FOLDER}/results/{result_path}-results.p", "rb"))
+    print(results['metrics']['mse'])
+    return results["metrics"]
 
 
 @app.task()
@@ -129,14 +138,14 @@ def get_timeseries(source, channel, x, y, excluded=None, box=5):
 
 
 @app.task()
-def get_timeseries_corrected(result_id, channel, x, y, excluded=None, box=5):
+def get_timeseries_corrected(result_path, channel, x, y, excluded=None, box=5):
     box_add = int(box/2)
     xmin = max(x - box_add, 0)
     xmax = min(x + box_add + 1, 512)
     ymin = max(y - box_add, 0)
     ymax = min(y + box_add + 1, 512)
 
-    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_id}-corrected-flim.results', mmap_mode='r')
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_path}-corrected-flim.results', mmap_mode='r')
     ex = []
     if excluded:
         ex = [int(i) for i in excluded.split(',')]
@@ -153,9 +162,9 @@ def get_frame(source, channel, idx):
 
 
 @app.task()
-def get_frame_corrected(result_id, idx):
+def get_frame_corrected(result_path, idx):
 
-    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_id}-corrected.results', mmap_mode='r')
+    d1 = np.load(f'/app/{BUCKET_FOLDER}/results/{result_path}-corrected.results', mmap_mode='r')
     dat = np.clip(100*d1[:, :, idx], 0, 255).astype(np.uint8)
     return dat
 

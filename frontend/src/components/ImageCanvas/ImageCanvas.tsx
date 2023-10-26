@@ -72,7 +72,7 @@ export function ImageCanvas() {
         setImageSrc(
           `${
             import.meta.env.VITE_BACKEND_URL
-          }/combined-corrected?result_id=${currentImage}/${currentResult}`
+          }/combined-corrected?result_path=${currentImage}/${currentResult}`
         );
       } else {
         setImageSrc(
@@ -129,7 +129,7 @@ export function ImageCanvas() {
             x,
             y,
             channel: channel,
-            result_id: `${currentImage}/${currentResult}`,
+            result_path: `${currentImage}/${currentResult}`,
           }).then((ts) => {
             dispatch(setChartData(ts));
           });

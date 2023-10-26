@@ -12,12 +12,33 @@ import numpy as np
 from PIL import Image, ImageOps
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
-from worker.tasks import correct_flim, convert_pt, get_frame, get_frame_corrected, get_timeseries, get_timeseries_corrected, get_combined, get_combined_corrected, get_frame_count, apply_correction, app as celery_app
+from worker.tasks import correct_flim, convert_pt, get_metrics, get_frame, get_frame_corrected, get_timeseries, get_timeseries_corrected, get_combined, get_combined_corrected, get_frame_count, apply_correction, app as celery_app
 from celery.result import AsyncResult
 from .models import Result
+from ninja.renderers import BaseRenderer
+from ninja.responses import NinjaJSONEncoder
+import json
 
 
-api = NinjaAPI()
+class NumpyEncoder(NinjaJSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, dict):
+            for key, val in obj:
+                obj[key] = default(val)
+        return super().default(obj)
+
+
+class NumpyRenderer(BaseRenderer):
+    media_type = "application/json"
+
+    def render(self, request, data, *, response_status):
+        return json.dumps(data, cls=NumpyEncoder)
+
+
+api = NinjaAPI(renderer=NumpyRenderer())
 
 
 storage_client = storage.Client.from_service_account_json(
@@ -215,8 +236,8 @@ def frame(request, idx: int, source, channel: int, colour=None):
 
 
 @api.get('/frame-corrected/{idx}')
-def frame_corrected(request, idx: int, result_id):
-    res = get_frame_corrected.delay(result_id, idx)
+def frame_corrected(request, idx: int, result_path):
+    res = get_frame_corrected.delay(result_path, idx)
     dat = res.get()
     img = Image.fromarray(dat, "L")
     img = ImageOps.colorize(img, black='black', white='red')
@@ -247,15 +268,26 @@ def combined(request, source, channel: int, excluded=None):
 
 
 @api.get('/combined-corrected')
-def combined_corrected(request, result_id, excluded=None):
+def combined_corrected(request, result_path, excluded=None):
     '''
     -***excluded***: ABC
     '''
-    res = get_combined_corrected.delay(result_id, excluded)
+    res = get_combined_corrected.delay(result_path, excluded)
     dat = res.get()
     img = Image.fromarray(dat, "L")
     # img = ImageOps.colorize(img, black='cyan', white='red', mid='purple')
     return serve_pil_image(img)
+
+
+@api.get('/metrics')
+def metrics(request, result_path):
+    '''
+    -***excluded***: ABC
+    '''
+    res = get_metrics.delay(result_path)
+    dat = res.get()
+
+    return {'data': dat}
 
 
 @api.get('/frame-count')
@@ -275,8 +307,8 @@ def timeseries(request, source, channel: int, x: int, y: int, excluded=None, box
 
 
 @api.get('/ts-corrected/{x}/{y}')
-def timeseries_corrected(request, result_id, channel: int, x: int, y: int, excluded=None, box=5):
-    res = get_timeseries_corrected.delay(result_id, channel, x, y, excluded, box)
+def timeseries_corrected(request, result_path, channel: int, x: int, y: int, excluded=None, box=5):
+    res = get_timeseries_corrected.delay(result_path, channel, x, y, excluded, box)
     dat = res.get()
     return {'data': dat}
 
@@ -293,7 +325,7 @@ def correction(request, source, channel: int, reference_frame=0, local_algorithm
     global_params = None
 
     res = apply_correction.delay(source, channel, reference_frame, local_algorithm, local_params, global_algorithm, global_params)
-    r = Result(task_id=res.id, completed=False, source=source, channel=channel, local_algorithm=local_algorithm,
+    r = Result(task_id=res.id, completed=False, flim_adjusted=False, source=source, channel=channel, local_algorithm=local_algorithm,
                global_algorithm=global_algorithm, local_params=local_params)
     r.save()
 

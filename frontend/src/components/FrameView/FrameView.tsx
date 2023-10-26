@@ -63,7 +63,7 @@ export function FrameView() {
       setCorrectedSrc(
         `${import.meta.env.VITE_BACKEND_URL}/frame-corrected/${
           val - 1
-        }?result_id=${currentImage}/${resultID}`
+        }?result_path=${currentImage}/${resultID}`
       );
     }
     setImageSrc(
@@ -106,7 +106,7 @@ export function FrameView() {
       setCorrectedSrc(
         `${import.meta.env.VITE_BACKEND_URL}/frame-corrected/${
           sliderVal - 1
-        }?result_id=${currentImage}/${resultID}`
+        }?result_path=${currentImage}/${resultID}`
       );
     } else {
       setCorrectedSrc(null);

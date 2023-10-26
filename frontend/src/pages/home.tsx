@@ -22,6 +22,7 @@ import {
 } from "requests/flim";
 import auth0mockable from "../auth0mockable";
 import { ResultsList } from "components/ResultsList";
+import { MetricChart } from "components/MetricChart";
 
 const Home = () => {
   const dispatch = useAppDispatch();
@@ -96,7 +97,7 @@ const Home = () => {
         <Box sx={{ marginLeft: 3, marginRight: 3 }}>
           <FrameView />
           <div style={{ marginTop: 5 }} />
-          <Histogram />
+          <MetricChart />
         </Box>
         <div>
           <ImageCanvas />
