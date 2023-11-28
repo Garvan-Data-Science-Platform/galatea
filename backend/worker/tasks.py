@@ -93,15 +93,17 @@ def convert_pt(self, input_file):
 
     def cb(x):
         self.update_state(state=f'Converting pt3 file: {round(x*100)}%')
-    flim_data_stack, meta = load_ptfile(f"/app/{BUCKET_FOLDER}/{input_file}", is_raw=False, gcs=not DEV, progress_cb=cb,destination_file=f"/app/{BUCKET_FOLDER}/{output_file}")
 
-    #self.update_state(state='Uploading results')
-    # npy
-    #blob = bucket.blob(output_file)
-    #outfile = TemporaryFile()
-    #np.save(outfile, flim_data_stack)
-    #outfile.seek(0)
-    #blob.upload_from_file(outfile)
+    dest = f'/data/{output_file}'
+    if DEV:
+        dest = f"/app/{BUCKET_FOLDER}/{output_file}"
+
+    flim_data_stack, meta = load_ptfile(f"/app/{BUCKET_FOLDER}/{input_file}", is_raw=False, gcs=not DEV, progress_cb=cb, destination_file=dest)
+
+    if not DEV:
+        self.update_state(state='Uploading results')
+        blob = bucket.blob(output_file)
+        blob.upload_from_filename(dest)
 
     # meta
     blob = bucket.blob(output_file.replace('.npy', '.meta.p'))
@@ -115,9 +117,9 @@ def convert_pt(self, input_file):
     self.update_state(state='Generating combined result')
 
     # Intensity
-    #dat = np.zeros((flim_data_stack.shape[0], flim_data_stack.shape[1], flim_data_stack.shape[2]), dtype=np.uint8)
+    # dat = np.zeros((flim_data_stack.shape[0], flim_data_stack.shape[1], flim_data_stack.shape[2]), dtype=np.uint8)
     dat = flim_data_stack.sum(axis=-1)
-    #dat = np.clip(10*dat, 0, 255).astype(np.uint8)
+    # dat = np.clip(10*dat, 0, 255).astype(np.uint8)
 
     self.update_state(state='Uploading intensity result')
 
@@ -148,7 +150,7 @@ def get_combined(source, channel, excluded):
 
     combined = d1[:, :, channel, idx].sum(axis=(2,))
 
-    dat = np.clip(255*combined/np.percentile(combined,98), 0, 255).astype(np.uint8)
+    dat = np.clip(255*combined/np.percentile(combined, 98), 0, 255).astype(np.uint8)
 
     return dat
 
@@ -203,7 +205,6 @@ def get_timeseries(source, channel, x, y, excluded=None, box=5):
     ymin = max(y - box_add, 0)
     ymax = min(y + box_add + 1, d1.shape[1])
 
-    
     ex = []
     if excluded:
         ex = [int(i) for i in excluded.split(',')]
