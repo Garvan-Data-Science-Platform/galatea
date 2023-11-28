@@ -1,0 +1,9 @@
+FROM python:3.11.4-slim-bookworm
+
+RUN pip install celery flower redis==4.5.5 python-dotenv numpy google-cloud-storage==2.10.0
+
+WORKDIR /app
+
+COPY worker worker
+
+CMD celery -A worker.tasks flower

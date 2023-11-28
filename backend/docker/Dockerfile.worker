@@ -1,0 +1,26 @@
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+
+WORKDIR /app
+
+ENV PYTHONBUFFERED 1
+RUN apt-get update && apt-get install curl lsb-release gnupg2 ffmpeg libsm6 libxext6 -y && \
+    GCSFUSE_REPO=gcsfuse-`lsb_release -c -s` && \
+    echo "deb https://packages.cloud.google.com/apt $GCSFUSE_REPO main" | tee /etc/apt/sources.list.d/gcsfuse.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    apt-get update && \
+    apt-get install gcsfuse inotify-tools procps -y 
+
+COPY requirements-worker.txt .
+
+RUN pip install --no-cache -r requirements-worker.txt
+
+COPY worker worker
+COPY docker docker
+
+#RUN addgroup --system appuser && adduser --system --group appuser && mkdir bucket && chown -R appuser:appuser /app
+RUN mkdir bucket
+ENV C_FORCE_ROOT="true"
+
+#USER appuser
+
+CMD [ "/app/docker/entrypoint-worker.sh" ]
