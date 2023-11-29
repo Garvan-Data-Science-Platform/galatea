@@ -16,5 +16,5 @@ numba==0.57
 numba-progress==1.1.0
 --pre --extra-index-url https://download.pytorch.org/whl/cu118
 torch==2.1.0
-motion-correction==0.1.15
+motion-correction==0.1.16
 watchdog
