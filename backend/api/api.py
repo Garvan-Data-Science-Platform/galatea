@@ -45,6 +45,16 @@ BUCKET_FOLDER = 'bucket'
 
 
 if os.getenv('DEV') == 'true':
+    def mock_perm(*args, **kwargs):
+        def inner(func):
+            return func
+        return inner
+    permission_required = mock_perm
+
+    def mock_auth():
+        return None
+    AuthBearer = mock_auth
+
     flim_ds = '/home/tim/projects/galatea/working/test_flim.npy'
     BUCKET_FOLDER = 'working'
     FLOWER_CONN = "http://flower:5555"
@@ -105,7 +115,8 @@ def health_check(request):
     return {"status": "ok"}
 
 
-@api.get('/idle')
+@api.get('/idle', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def idle(request):
 
     import requests
@@ -124,7 +135,8 @@ def idle(request):
     return {"DELAY": time}
 
 
-@api.get('/workers')
+@api.get('/workers', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def workers(request):
 
     import requests
@@ -145,7 +157,8 @@ def workers(request):
     return {"workers": bool(workersup), "uptime": uptime}
 
 
-@api.get('/down')
+@api.get('/down', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def down(request):
     from google.cloud import container_v1
 
@@ -166,7 +179,8 @@ def down(request):
     return {"status": "ok"}
 
 
-@api.get('/up')
+@api.get('/up', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def up(request):
     from google.cloud import container_v1
 
@@ -193,7 +207,8 @@ def up(request):
     return {"status": "ok", "operation_id": response.name}
 
 
-@api.get('/operation/{operation_id}')
+@api.get('/operation/{operation_id}', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def operation(request, operation_id):
     from google.cloud import container_v1
 
@@ -207,7 +222,8 @@ def operation(request, operation_id):
     return {"status": response.status}
 
 
-@api.get('/operations')
+@api.get('/operations', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def operations(request):
     from google.cloud import container_v1
 
@@ -223,7 +239,8 @@ def operations(request):
     return {"status": "ok", "ops": ops}
 
 
-@api.get('/nodepool-size')
+@api.get('/nodepool-size', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def size(request):
     from google.cloud import container_v1
 
@@ -239,7 +256,8 @@ def size(request):
     return {"status": "ok"}
 
 
-@api.get('/error')
+@api.get('/error', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def err(request):
 
     raise ValueError("VALUE ERROR")
@@ -247,7 +265,8 @@ def err(request):
     return {"status": "ok"}
 
 
-@api.post('/preload')
+@api.post('/preload', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def preload_file(request, source):
 
     res = preload.delay(source)
@@ -337,7 +356,8 @@ def convert_pt_file(request, path: str):
     return {"task_id": result.id}
 
 
-@api.get('/status/{task_id}')
+@api.get('/status/{task_id}', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def task_status(request, task_id):
     res = AsyncResult(task_id, app=celery_app)
 
@@ -359,7 +379,8 @@ class ResultOut(Schema):
     global_params: dict = None
 
 
-@api.get('/results', response=List[ResultOut])
+@api.get('/results', response=List[ResultOut], auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def list_results(request, source):
 
     res = Result.objects.filter(source=source)
@@ -367,7 +388,8 @@ def list_results(request, source):
     return res
 
 
-@api.get('/convert')
+@api.get('/convert', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def convert(request, filename):
 
     res = convert_pt.apply_async((filename,))
@@ -375,7 +397,8 @@ def convert(request, filename):
     return {"status": "ok", "task_id": res.id}
 
 
-@api.get('/frame/{idx}')
+@api.get('/frame/{idx}', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def frame(request, idx: int, source, channel: int, colour=None):
 
     res = get_frame.delay(source, channel, idx)
@@ -400,7 +423,8 @@ def frame(request, idx: int, source, channel: int, colour=None):
     return serve_pil_image(img)
 
 
-@api.get('/frame-corrected/{idx}')
+@api.get('/frame-corrected/{idx}', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def frame_corrected(request, idx: int, result_path):
     res = get_frame_corrected.delay(result_path, idx)
     dat = res.get()
@@ -420,7 +444,8 @@ def frame_corrected(request, idx: int, result_path):
     return serve_pil_image(img)
 
 
-@api.get('/combined')
+@api.get('/combined', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def combined(request, source, channel: int, excluded=None):
     '''
     -***excluded***: ABC
@@ -432,7 +457,8 @@ def combined(request, source, channel: int, excluded=None):
     return serve_pil_image(img)
 
 
-@api.get('/combined-corrected')
+@api.get('/combined-corrected', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def combined_corrected(request, result_path, excluded=None):
     '''
     -***excluded***: ABC
@@ -444,7 +470,8 @@ def combined_corrected(request, result_path, excluded=None):
     return serve_pil_image(img)
 
 
-@api.get('/metrics')
+@api.get('/metrics', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def metrics(request, result_path):
     '''
     -***excluded***: ABC
@@ -455,7 +482,8 @@ def metrics(request, result_path):
     return {'data': dat}
 
 
-@api.get('/frame-count')
+@api.get('/frame-count', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def frame_count(request, source):
 
     res = get_frame_count.delay(source)
@@ -464,7 +492,8 @@ def frame_count(request, source):
     return {'frames': dat}
 
 
-@api.get('/channel-count')
+@api.get('/channel-count', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def channel_count(request, source):
 
     res = get_channel_count.delay(source)
@@ -473,21 +502,24 @@ def channel_count(request, source):
     return {'channels': dat}
 
 
-@api.get('/ts/{x}/{y}')
+@api.get('/ts/{x}/{y}', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def timeseries(request, source, channel: int, x: int, y: int, excluded=None, box=5):
     res = get_timeseries.delay(source, channel, x, y, excluded, box)
     dat = res.get()
     return {'data': dat}
 
 
-@api.get('/ts-corrected/{x}/{y}')
+@api.get('/ts-corrected/{x}/{y}', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def timeseries_corrected(request, result_path, channel: int, x: int, y: int, excluded=None, box=5):
     res = get_timeseries_corrected.delay(result_path, channel, x, y, excluded, box)
     dat = res.get()
     return {'data': dat}
 
 
-@api.post('/apply-correction')
+@api.post('/apply-correction', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def correction(request, source, channel: int, reference_frame=0, local_algorithm=None, global_algorithm=None):
     import json
     if local_algorithm == "none":
@@ -503,7 +535,8 @@ def correction(request, source, channel: int, reference_frame=0, local_algorithm
     return {"status": "ok", "task_id": res.id}
 
 
-@api.post('/result')
+@api.post('/result', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def save_result(request, task_id, source, channel, local_algorithm, global_algorithm):
     local_params = json.loads(request.body)["local_params"]
     r = Result(task_id=task_id, completed=False, flim_adjusted=False, source=source, channel=channel, local_algorithm=local_algorithm,
@@ -513,7 +546,8 @@ def save_result(request, task_id, source, channel, local_algorithm, global_algor
     return {"status": "ok"}
 
 
-@api.delete('/result/{result_id}')
+@api.delete('/result/{result_id}', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def delete_result(request, result_id):
     import glob
     import os
@@ -528,7 +562,8 @@ def delete_result(request, result_id):
     return {"status": "ok"}
 
 
-@api.post('/correct-flim')
+@api.post('/correct-flim', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def correct_flim_view(request, source, result_id):
 
     res = correct_flim.delay(source, result_id)
@@ -536,7 +571,8 @@ def correct_flim_view(request, source, result_id):
     return {"status": "ok", "task_id": res.id}
 
 
-@api.post('/pt3')
+@api.post('/pt3', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def convert_to_pt3(request, source, result_id, excluded=None):
 
     res = write_pt3.delay(source, result_id, excluded)
@@ -544,7 +580,8 @@ def convert_to_pt3(request, source, result_id, excluded=None):
     return {"status": "ok", "task_id": res.id}
 
 
-@api.get('/pt3')
+@api.get('/pt3', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def download_pt3(request, source, result_id):
 
     fpath = f'/app/{BUCKET_FOLDER}/results/{source}/{source}-{result_id}-corrected.pt3'
@@ -552,7 +589,8 @@ def download_pt3(request, source, result_id):
     return FileResponse(open(fpath, 'rb'))
 
 
-@api.post('/flim-applied')
+@api.post('/flim-applied', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
 def flim_applied(request, result_id):
 
     r = Result.objects.get(task_id=result_id)

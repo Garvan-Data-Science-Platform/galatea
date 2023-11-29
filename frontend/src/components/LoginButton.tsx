@@ -1,16 +1,10 @@
 import React from "react";
-import { useAuth0 } from "@auth0/auth0-react";
+import auth0mockable from "../auth0mockable";
 
 const LoginButton = () => {
-  const { loginWithRedirect, logout } = useAuth0();
+  const { loginWithRedirect } = auth0mockable.useAuth0();
 
   return <button onClick={() => loginWithRedirect()}>Log In</button>;
-};
-
-const LogoutButton = () => {
-  const { logout } = useAuth0();
-
-  return <button></button>;
 };
 
 export default LoginButton;

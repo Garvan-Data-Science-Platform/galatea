@@ -26,7 +26,10 @@ describe("<FileBrowser />", () => {
   });
   beforeEach(() => {
     cy.stub(auth0mockable, "useAuth0").returns({
-      getAccessTokenSilently: () => "abc",
+      getAccessTokenSilently: () => {
+        console.log("MOCKED ACCESS TOKEN");
+        return "abc";
+      },
     });
     cy.mount(
       <Box sx={{ width: 300, height: 500 }}>

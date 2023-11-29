@@ -44,7 +44,6 @@ import {
   waitForTaskSuccess,
 } from "requests/flim";
 import { algorithms } from "../../algorithms";
-import { useAuth0 } from "@auth0/auth0-react";
 import {
   addResult,
   removeResult,
@@ -54,6 +53,7 @@ import {
   setResults,
   setSelectedResult,
 } from "state/slices/resultsSlice";
+import auth0mockable from "../../auth0mockable";
 Chart.register(...registerables);
 
 export function ParametersBox() {
@@ -71,7 +71,7 @@ export function ParametersBox() {
   const channel = useAppSelector(selectChannel);
   const referenceFrame = useAppSelector(selectReferenceFrame);
   const dispatch = useAppDispatch();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = auth0mockable.useAuth0();
   const currentImg = useAppSelector(selectCurrentImage);
   const currentResult = useAppSelector(selectSelectedResult);
   const excluded = useAppSelector(selectExcludedFrames);

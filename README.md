@@ -12,6 +12,9 @@ FLIM Image Processing
 
 Requires nodejs, python and docker
 
+Spin up both front end and back end with:
+`make dev`
+
 ### Frontend:
 
 `cd frontend && yarn && yarn dev`

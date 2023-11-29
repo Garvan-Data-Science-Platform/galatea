@@ -4,15 +4,12 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import ProfilePage from "./pages/profile";
 import HomePage from "./pages/home";
 import LoginPage from "./pages/login";
-import {
-  Auth0Provider,
-  useAuth0,
-  withAuthenticationRequired,
-} from "@auth0/auth0-react";
+import { Auth0Provider, withAuthenticationRequired } from "@auth0/auth0-react";
 import { Provider } from "react-redux";
 import { store } from "./state/store.ts";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
+import { createContext } from "react";
 
 function App() {
   return (
@@ -43,7 +40,9 @@ function App() {
 }
 
 const AuthenticationGuard = ({ component }: any) => {
-  const Component = withAuthenticationRequired(component);
+  const Component = window.Cypress
+    ? component
+    : withAuthenticationRequired(component);
   return <Component />;
 };
 
