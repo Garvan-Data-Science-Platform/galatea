@@ -32,7 +32,7 @@ import {
   selectFileSelectionSelected,
 } from "state/slices/fileSelectionSlice";
 import auth0mockable from "../../auth0mockable";
-import { convertPTFile } from "requests/flim";
+import { convertPTFile, waitForTaskSuccess } from "requests/flim";
 
 interface FileBrowserProps {
   bucket: string;
@@ -67,6 +67,10 @@ function FileBrowser(props: FileBrowserProps) {
   const handleCloseDelPopover = () => {
     setDelAnchorEl(null);
   };
+  //const handleError = (message: string) => {
+  //  dispatch(setError(true));
+  //  dispatch(setErrorText(message));
+  //};
   const handleUpload: React.ReactEventHandler<HTMLInputElement> = async (
     event
   ) => {
@@ -79,14 +83,25 @@ function FileBrowser(props: FileBrowserProps) {
     let formData = new FormData();
     formData.append("file", file);
     setUploading(true);
-    await fetch(url, {
-      method: "PUT",
-      body: formData,
-      headers: { "Content-Type": "application/octet-stream" },
-    });
-    if (["pt3", "npy", "ptu"].includes(file.name.slice(-3))) {
-      await convertPTFile(token, path);
+    var options;
+    if (import.meta.env.DEV) {
+      options = {
+        method: "POST",
+      };
+    } else {
+      options = {
+        method: "PUT",
+        headers: { "Content-Type": "application/octet-stream" },
+      };
     }
+    await fetch(url, {
+      body: formData,
+      ...options,
+    });
+    //if (["pt3", "npy", "ptu"].includes(file.name.slice(-3))) {
+    //  let task_id = await convertPTFile(token, path);
+    //  await waitForTaskSuccess(token, task_id, handleError);
+    //}
     setUploading(false);
     reloader();
   };

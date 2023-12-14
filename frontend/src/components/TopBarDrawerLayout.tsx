@@ -115,6 +115,7 @@ export default function TopBarDrawerLayout({
             onClick={handleDrawerOpen}
             edge="start"
             sx={{ mr: 2, ...(open && { display: "none" }) }}
+            data-cy="drawer-open"
           >
             <MenuIcon />
           </IconButton>
@@ -130,6 +131,7 @@ export default function TopBarDrawerLayout({
               onClick={handleMenu}
               id="account-button"
               color="inherit"
+              data-cy="profile-button"
             >
               <AccountCircle />
             </IconButton>
@@ -180,7 +182,7 @@ export default function TopBarDrawerLayout({
         open={open}
       >
         <DrawerHeader>
-          <IconButton onClick={handleDrawerClose}>
+          <IconButton onClick={handleDrawerClose} data-cy="drawer-close">
             {theme.direction === "ltr" ? (
               <ChevronLeftIcon />
             ) : (

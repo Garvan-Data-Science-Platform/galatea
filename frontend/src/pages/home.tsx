@@ -162,6 +162,7 @@ const Home = () => {
             p: 4,
             textAlign: "center",
           }}
+          data-cy="loading-box"
         >
           <Typography>Loading</Typography>
           <Typography>{statusText}</Typography>

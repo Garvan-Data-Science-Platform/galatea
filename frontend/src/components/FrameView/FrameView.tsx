@@ -130,7 +130,13 @@ export function FrameView() {
               height={512}
               ref={addSrc(imageSrc + `&channel=${channel}`)}
               key={imageSrc}
-              style={{ position: "absolute", top: 0, left: 0 }}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                objectFit: "contain",
+              }}
+              data-cy="frame-original"
             />
           ) : null}
           {display.reference && imageSrc ? (
@@ -139,7 +145,13 @@ export function FrameView() {
               height={512}
               ref={addSrc(referenceSrc + `&channel=${channel}&colour=cyan`)}
               key={referenceSrc + "ref"}
-              style={{ position: "absolute", top: 0, left: 0 }}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                objectFit: "contain",
+              }}
+              data-cy="frame-reference"
             />
           ) : null}
 
@@ -149,7 +161,13 @@ export function FrameView() {
               height={512}
               ref={addSrc(correctedSrc)}
               key={correctedSrc}
-              style={{ position: "absolute", top: 0, left: 0 }}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                objectFit: "contain",
+              }}
+              data-cy="frame-corrected"
             />
           ) : null}
           <div
@@ -192,6 +210,7 @@ export function FrameView() {
                   return { ...state, original: !state.original };
                 });
               }}
+              data-cy="checkbox-original"
             />
           }
           label="Original"
@@ -207,6 +226,7 @@ export function FrameView() {
                   return { ...state, corrected: !state.corrected };
                 });
               }}
+              data-cy="checkbox-corrected"
             />
           }
           label="Corrected"
@@ -222,6 +242,7 @@ export function FrameView() {
                   return { ...state, reference: !state.reference };
                 });
               }}
+              data-cy="checkbox-reference"
             />
           }
           label="Reference"
@@ -238,6 +259,7 @@ export function FrameView() {
           ref={sliderRef}
           valueLabelDisplay="on"
           onChangeCommitted={onSliderChange}
+          data-cy="repetition-slider"
         />
         <Tooltip title="Whether the repetition should be used in creating the combined FLIM image">
           <FormControlLabel
@@ -251,6 +273,7 @@ export function FrameView() {
                   //dispatch(setChartFrame(2));
                   //console.log("HELLO");
                 }}
+                data-cy="checkbox-repetition"
               />
             }
             label="Repetition used"

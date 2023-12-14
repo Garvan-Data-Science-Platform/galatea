@@ -177,6 +177,7 @@ export function ParametersBox() {
           value={channel}
           label="Channel"
           onChange={(e) => dispatch(setChannel(Number(e.target.value)))}
+          data-cy="channel-select"
         >
           {Array.from(Array(NUM_CHANNELS).keys()).map((key) => {
             return (
@@ -194,11 +195,12 @@ export function ParametersBox() {
           type="number"
           defaultValue={1}
           onChange={(e) => {
-            dispatch(setReferenceFrame(Number(e.target.value)));
+            dispatch(setReferenceFrame(Number(e.target.value) - 1));
           }}
           InputLabelProps={{
             shrink: true,
           }}
+          data-cy="ref-frame-field"
         />
       </FormControl>
       <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
@@ -215,9 +217,14 @@ export function ParametersBox() {
               algorithms.local.filter((val) => e.target.value == val.name)[0]
             )
           }
+          data-cy="local-correction-select"
         >
           {algorithms.local.map((val) => {
-            return <MenuItem value={val.name}>{val.name}</MenuItem>;
+            return (
+              <MenuItem value={val.name} key={val.name}>
+                {val.name}
+              </MenuItem>
+            );
           })}
         </Select>
       </FormControl>
@@ -258,9 +265,14 @@ export function ParametersBox() {
               algorithms.global.filter((val) => e.target.value == val.name)[0]
             )
           }
+          data-cy="global-correction-select"
         >
           {algorithms.global.map((val) => {
-            return <MenuItem value={val.name}>{val.name}</MenuItem>;
+            return (
+              <MenuItem value={val.name} key={val.name}>
+                {val.name}
+              </MenuItem>
+            );
           })}
         </Select>
       </FormControl>
@@ -269,6 +281,7 @@ export function ParametersBox() {
         variant="contained"
         sx={{ marginTop: 2 }}
         onClick={onApplyCorrectionClicked}
+        data-cy="apply-correction-button"
       >
         Apply Correction
       </Button>
@@ -278,6 +291,7 @@ export function ParametersBox() {
         sx={{ marginTop: 2 }}
         disabled={!currentResult}
         onClick={onDownloadClicked}
+        data-cy="pt3-download"
       >
         Download as .pt3
       </Button>

@@ -109,6 +109,7 @@ function FileBrowser(props: FileBrowserProps) {
           Results
         </ListSubheader>
       }
+      data-cy="results-list"
     >
       {uploading ? (
         <Box>
@@ -150,6 +151,7 @@ function FileBrowser(props: FileBrowserProps) {
                       .join(" ")
                   : " Local: None")
               }
+              data-cy="result-item"
             />
           </ListItemButton>
         );

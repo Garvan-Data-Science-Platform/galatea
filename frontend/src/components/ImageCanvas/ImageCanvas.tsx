@@ -232,6 +232,7 @@ export function ImageCanvas() {
           onLoad={() => {
             setLoaded(true);
           }}
+          data-cy="combined-original"
         />
       </div>
       <ToggleButtonGroup

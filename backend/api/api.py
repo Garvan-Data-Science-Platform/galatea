@@ -1,5 +1,6 @@
 from io import BytesIO
-from ninja import NinjaAPI, Schema
+from ninja import NinjaAPI, Schema, File
+from ninja.files import UploadedFile
 from ninja.errors import AuthenticationError, ValidationError
 from google.cloud import storage
 from galatea.auth import AuthBearer
@@ -86,13 +87,13 @@ if os.getenv('DEV') == 'true':
     class MockBlob():
         def __init__(self, name):
             self.name = name
-            self.url = "dummy"
+            self.url = "test-upload"
 
         def __str__(self):
             return self.name
 
         def generate_signed_url(self, version, expiration, method, content_type=None):
-            return "dummy"
+            return "test-upload"
 
     def mock_bucket(bucket, delimiter, prefix):
         print("USING MOCK BUCKET")
@@ -150,7 +151,10 @@ def workers(request):
         r = requests.get(FLOWER_CONN + "/api/workers?refresh=true")
         workers = r.json()
         for w in workersup:
-            u = workers[w]['stats']['uptime']
+            try:
+                u = workers[w]['stats']['uptime']
+            except:
+                u = 0
             if u < uptime:
                 uptime = u
 
@@ -274,6 +278,13 @@ def preload_file(request, source):
     return {"status": "ok", "task_id": res.id}
 
 
+@api.post('/test-upload', auth=AuthBearer())
+@permission_required("api.access", raise_exception=True)
+def test_upload(request, file: UploadedFile):
+    with open(f'/app/{BUCKET_FOLDER}/{file.name}', 'wb') as f:
+        f.write(file.read())
+
+
 @api.get("/bucket/{bucket}/", response=BucketFileList, auth=AuthBearer())
 @permission_required("api.access", raise_exception=True)
 def list_bucket(request, bucket: str, subdir: str | None = None, limit: int | None = None):
@@ -326,6 +337,9 @@ def delete_folder(request, bucket: str, folderName: str):
 @permission_required("api.access", raise_exception=True)
 def get_upload_url(request, bucket: str, path: str):
     """Get a signed upload URL"""
+
+    if os.getenv("DEV") == 'true':
+        return {"url": request.build_absolute_uri('/test-upload')}
 
     bucket = storage_client.get_bucket(bucket)
     blob = bucket.blob(path)
