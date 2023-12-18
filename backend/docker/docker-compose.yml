@@ -12,9 +12,6 @@ services:
     build:
       context: ../
       dockerfile: ./docker/Dockerfile.worker
-    volumes:
-      #- /home/tim/projects/imagej/cabana-cloud:/app
-      - /etc/secret-volume:/etc/secret-volume
     privileged: true
     #entrypoint: celery
     command: ./docker/entrypoint-worker-dev.sh

@@ -2,7 +2,6 @@ describe("Basic functionality", () => {
   beforeEach(() => {
     cy.visit("/");
   });
-  /*
 
   it("Can hide and show file browser, click login button", () => {
     //Filebrowser is open on page load
@@ -39,7 +38,7 @@ describe("Basic functionality", () => {
       });
 
     //Combined image should be loaded
-    cy.get("[data-cy=combined-original]")
+    cy.get("[data-cy=combined-img]")
       .should("be.visible")
       .and(($img) => {
         expect($img[0].naturalWidth).to.be.greaterThan(0);
@@ -142,12 +141,10 @@ describe("Basic functionality", () => {
     //Make repitition not used
     cy.get("[data-cy=checkbox-repetition]").click();
     //Source of combined flim image should be changed
-    cy.get("[data-cy=combined-original]").then(($img) => {
+    cy.get("[data-cy=combined-img]").then(($img) => {
       expect($img.attr("src")).to.contain("excluded=1");
     });
   });
-
-   */
 
   it("Can interact with combined flim image", () => {
     //Load pt3 and result
@@ -167,8 +164,8 @@ describe("Basic functionality", () => {
     cy.get("[data-cy=combined-img]").then(($img) => {
       expect($img.attr("src")).to.contain("combined?");
     });
-    cy.wait(1000);
-    cy.get("[data-cy=combined-img]").then(($img) => {
+
+    cy.get("[data-cy=combined-img]").should(($img) => {
       expect($img[0].naturalWidth).to.be.greaterThan(0);
     });
     //Open results
@@ -180,7 +177,7 @@ describe("Basic functionality", () => {
       "Mui-selected"
     );
     //Combined frame should be loaded
-    cy.get("[data-cy=combined-img]").then(($img) => {
+    cy.get("[data-cy=combined-img]").should(($img) => {
       expect($img.attr("src")).to.contain("combined-corrected?");
       expect($img[0].naturalWidth).to.be.greaterThan(0);
     });
@@ -229,9 +226,12 @@ describe("Basic functionality", () => {
     cy.contains("2_frames").click();
     cy.get("[data-cy=loading-box]").should("be.visible");
     cy.get("[data-cy=loading-box]", { timeout: 20000 }).should("not.exist");
-    cy.contains("Local: morphic").click();
+    cy.get("[data-cy=results-list]>div").eq(1).as("resultEl").click();
+    cy.get("@resultEl").should("exist")
     //Delete pt3
-
+    cy.get("[data-cy=delete-result-button]").click()
+    cy.get("[data-cy=confirm-delete-button]").click()
     //Result should not be visible on left. No option to toggle corrected combined or display result frame.
+    cy.get("@resultEl").should("not.exist")
   });
 });
