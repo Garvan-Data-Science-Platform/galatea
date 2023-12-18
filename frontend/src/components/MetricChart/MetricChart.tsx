@@ -87,6 +87,7 @@ export function MetricChart() {
           label="Local correction algorithm"
           onChange={(e) => setMetric(e.target.value)}
           size="small"
+          data-cy="metric-select"
         >
           <MenuItem value="ssi">Structural Similarity Index</MenuItem>
           <MenuItem value="mse">Mean Squared Error</MenuItem>

@@ -95,7 +95,6 @@ describe("Basic functionality", () => {
     );
   });
 
-   */
 
   it("Can interact with the frames", () => {
     //Load pt3 and result
@@ -144,30 +143,95 @@ describe("Basic functionality", () => {
     cy.get("[data-cy=checkbox-repetition]").click();
     //Source of combined flim image should be changed
     cy.get("[data-cy=combined-original]").then(($img) => {
-      expect($img.attr(""));
+      expect($img.attr("src")).to.contain("excluded=1");
     });
   });
 
+   */
+
   it("Can interact with combined flim image", () => {
-    //Load pt3
-    //Original combined image should be visible.
-    //Corrected combined image should be be selectible
-    //Load result
-    //Toggle corrected combined image
+    //Load pt3 and result
+
+    cy.contains("2_frames").click();
+    cy.get("[data-cy=loading-box]").should("be.visible");
+    cy.get("[data-cy=loading-box]", { timeout: 20000 }).should("not.exist");
+
+    //Corrected frame not loaded
+    cy.get("[data-cy=frame-corrected]").should("not.exist");
+    cy.get("[data-cy=checkbox-corrected] input").should("be.disabled");
+    //Corrected combined button disabled, image not visible
+    cy.get("[data-cy=combined-corrected-button]").should("be.disabled");
+    cy.get("[data-cy=combined-corrected]").should("not.exist");
+
+    //Combined frame should be loaded
+    cy.get("[data-cy=combined-img]").then(($img) => {
+      expect($img.attr("src")).to.contain("combined?");
+    });
+    cy.wait(1000);
+    cy.get("[data-cy=combined-img]").then(($img) => {
+      expect($img[0].naturalWidth).to.be.greaterThan(0);
+    });
+    //Open results
+    cy.contains("Local: morphic").click();
+
+    //Combined corrected button should be automatically selected
+    cy.get("[data-cy=combined-corrected-button]").should(
+      "have.class",
+      "Mui-selected"
+    );
+    //Combined frame should be loaded
+    cy.get("[data-cy=combined-img]").then(($img) => {
+      expect($img.attr("src")).to.contain("combined-corrected?");
+      expect($img[0].naturalWidth).to.be.greaterThan(0);
+    });
+
+    cy.intercept("**/ts/**").as("ts");
+    cy.intercept("**/ts-corrected/**").as("tscorr");
+
+    cy.get("[data-cy=redbox]").should("not.exist");
+
     //Click on combined image, should show loading then populate chart
+    cy.get("[data-cy=combined-canvas]").click(100, 100);
+
+    cy.get("[data-cy=redbox]").should("exist");
+
+    //cy.contains("Aligning").should("exist");
+
+    cy.wait("@tscorr", { timeout: 30000 });
+
     //Toggle original, FLIM chart should update
+    cy.get("[data-cy=combined-original-button]").click({ force: true });
+
+    cy.wait("@ts");
   });
 
   it("Can view metrics for result", () => {
     //Load pt3 and result
+    cy.intercept(/metrics/).as("metrics");
+    cy.contains("2_frames").click();
+    cy.get("[data-cy=loading-box]").should("be.visible");
+    cy.get("[data-cy=loading-box]", { timeout: 20000 }).should("not.exist");
+    cy.contains("Local: morphic").click();
     //Metrics should be visible
+    cy.wait("@metrics");
     //Change metric type
+    cy.get("[data-cy=metric-select]").click();
+    cy.contains("Mean Squared Error").click();
+    cy.get("[data-cy=metric-select] div").should(
+      "have.text",
+      "Mean Squared Error"
+    );
     //Chart should change
   });
 
   it("Can delete result", () => {
     //Load pt3 and result
+    cy.contains("2_frames").click();
+    cy.get("[data-cy=loading-box]").should("be.visible");
+    cy.get("[data-cy=loading-box]", { timeout: 20000 }).should("not.exist");
+    cy.contains("Local: morphic").click();
     //Delete pt3
+
     //Result should not be visible on left. No option to toggle corrected combined or display result frame.
   });
 });

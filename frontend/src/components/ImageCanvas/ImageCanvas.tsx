@@ -193,6 +193,7 @@ export function ImageCanvas() {
             getCursorPosition(e);
           }}
           style={{ opacity: 0, position: "absolute" }}
+          data-cy="combined-canvas"
         />
         {boxPos ? (
           <div
@@ -206,6 +207,7 @@ export function ImageCanvas() {
               borderWidth: 2,
               borderColor: "red",
             }}
+            data-cy="redbox"
           />
         ) : null}
 
@@ -232,19 +234,26 @@ export function ImageCanvas() {
           onLoad={() => {
             setLoaded(true);
           }}
-          data-cy="combined-original"
+          data-cy="combined-img"
         />
       </div>
       <ToggleButtonGroup
         color="primary"
         size="small"
+        exclusive
         value={showCorrected ? "corrected" : "original"}
         onChange={(e) => {
           setShowCorrected(e.target.value == "corrected");
         }}
       >
-        <ToggleButton value="original">Original</ToggleButton>
-        <ToggleButton disabled={!currentResult} value="corrected">
+        <ToggleButton value="original" data-cy="combined-original-button">
+          Original
+        </ToggleButton>
+        <ToggleButton
+          disabled={!currentResult}
+          value="corrected"
+          data-cy="combined-corrected-button"
+        >
           Corrected
         </ToggleButton>
       </ToggleButtonGroup>

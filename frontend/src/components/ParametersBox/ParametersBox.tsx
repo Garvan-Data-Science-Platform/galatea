@@ -303,6 +303,7 @@ export function ParametersBox() {
         sx={{ marginTop: 2 }}
         disabled={!currentResult}
         onClick={handleClickDeleted}
+        data-cy="delete-result-button"
       >
         Delete result
       </Button>
