@@ -65,9 +65,8 @@ describe("<FileBrowser />", () => {
   });
 
   it("Can upload a file to the right directory", () => {
-    cy.intercept("PUT", "http://signeduploadurl/", (req) => {
-      expect(req.method).to.equal("PUT");
-      expect(req.headers["content-type"]).to.equal("application/octet-stream");
+    cy.intercept("POST", "http://signeduploadurl/", (req) => {
+      expect(req.method).to.equal("POST");
       expect(req.body).to.include("dummy");
       req.reply({ status: "ok" });
     }).as("upload");
