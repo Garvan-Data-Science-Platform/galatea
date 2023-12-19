@@ -411,8 +411,16 @@ def convert(request, filename):
     return {"status": "ok", "task_id": res.id}
 
 
-@api.get('/frame/{idx}', auth=AuthBearer())
+@api.get('/frame-count', auth=AuthBearer())
 @permission_required("api.access", raise_exception=True)
+def frame_count(request, source):
+
+    res = get_frame_count.delay(source)
+    dat = res.get()
+
+    return {'frames': dat}
+
+@api.get('/frame/{idx}')
 def frame(request, idx: int, source, channel: int, colour=None):
 
     res = get_frame.delay(source, channel, idx)
@@ -434,11 +442,11 @@ def frame(request, idx: int, source, channel: int, colour=None):
                 pixdata[x, y] = (255, 255, 255, 0)
 
     #
+    print("2")
     return serve_pil_image(img)
 
 
-@api.get('/frame-corrected/{idx}', auth=AuthBearer())
-@permission_required("api.access", raise_exception=True)
+@api.get('/frame-corrected/{idx}')
 def frame_corrected(request, idx: int, result_path):
     res = get_frame_corrected.delay(result_path, idx)
     dat = res.get()
@@ -458,8 +466,7 @@ def frame_corrected(request, idx: int, result_path):
     return serve_pil_image(img)
 
 
-@api.get('/combined', auth=AuthBearer())
-@permission_required("api.access", raise_exception=True)
+@api.get('/combined')
 def combined(request, source, channel: int, excluded=None):
     '''
     -***excluded***: ABC
@@ -471,8 +478,7 @@ def combined(request, source, channel: int, excluded=None):
     return serve_pil_image(img)
 
 
-@api.get('/combined-corrected', auth=AuthBearer())
-@permission_required("api.access", raise_exception=True)
+@api.get('/combined-corrected')
 def combined_corrected(request, result_path, excluded=None):
     '''
     -***excluded***: ABC
@@ -625,9 +631,11 @@ def serve_pil_image(pil_img):
 
 @api.exception_handler(AuthenticationError)
 def service_unavailable(request, exc: AuthenticationError):
+    print("AUTH ERROR")
+    print(exc)
     exc.args
-    return api.create_response(
-        request,
-        exc.args[1],
-        status=exc.args[0],
-    )
+    #return api.create_response(
+    #    request,
+    #    exc.args[1],
+    #    status=exc.args[0],
+    #)

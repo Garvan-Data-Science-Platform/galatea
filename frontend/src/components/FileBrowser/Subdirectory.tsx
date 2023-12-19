@@ -42,6 +42,42 @@ export interface BucketFile {
   extensions?: string[];
 }
 
+export function filterExtensionsAndCombine(
+  files: BucketFile[],
+  extensions: string[],
+  combine: boolean
+) {
+  let result: BucketFile[] = [];
+  let fnames: string[] = [];
+  for (var i in files) {
+    if (files[i].name.includes(".")) {
+      extensions.forEach((ext) => {
+        if (files[i].name.split(".").at(-1) == ext) {
+          if (combine) {
+            let newFile = { ...files[i] };
+            newFile.name = newFile.name.replace("." + ext, "");
+            if (!fnames.includes(newFile.name)) {
+              newFile.extensions
+                ? newFile.extensions.push(ext)
+                : (newFile.extensions = [ext]);
+              result.push(newFile);
+              fnames.push(newFile.name);
+            } else {
+              result
+                .filter((val) => val.name == newFile.name)
+                .at(0)
+                ?.extensions?.push(ext);
+            }
+          } else {
+            result.push(files[i]);
+          }
+        }
+      });
+    }
+  }
+  return result;
+}
+
 export function Subdirectory(props: SubdirectoryProps) {
   const { getAccessTokenSilently } = auth0mockable.useAuth0();
   const [subdirs, setSubdirs] = React.useState<DirectoryI[]>([]);
@@ -65,40 +101,6 @@ export function Subdirectory(props: SubdirectoryProps) {
       return;
     }
   };
-
-  function filterExtensionsAndCombine(files: BucketFile[]) {
-    let result: BucketFile[] = [];
-    let fnames: string[] = [];
-    for (var i in files) {
-      if (props.extensions) {
-        props.extensions.forEach((ext) => {
-          if (files[i].name.slice(-1 * ext.length).includes(ext)) {
-            if (props.combine) {
-              let newFile = { ...files[i] };
-              newFile.name = newFile.name.replace(ext, "");
-              if (!fnames.includes(newFile.name)) {
-                newFile.extensions
-                  ? newFile.extensions.push(ext)
-                  : (newFile.extensions = [ext]);
-                result.push(newFile);
-                fnames.push(newFile.name);
-              } else {
-                result
-                  .filter((val) => val.name == newFile.name)
-                  .at(0)
-                  ?.extensions?.push(ext);
-              }
-            } else {
-              result.push(files[i]);
-            }
-          }
-        });
-      } else {
-        result.push(files[i]);
-      }
-    }
-    return result;
-  }
 
   const load = async () => {
     let token = await getAccessTokenSilently();
@@ -213,7 +215,14 @@ export function Subdirectory(props: SubdirectoryProps) {
               />
             ) : null
           )}
-          {filterExtensionsAndCombine(files).map((v, idx) => (
+          {(props.extensions
+            ? filterExtensionsAndCombine(
+                files,
+                props.extensions,
+                Boolean(props.combine)
+              )
+            : files
+          ).map((v, idx) => (
             <ListItemButton
               sx={{ pl: 2 * props.level }}
               key={`${v}_${idx}`}

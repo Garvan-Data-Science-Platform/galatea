@@ -95,20 +95,20 @@ const Home = () => {
           <>
             <FileBrowser
               bucket="galatea"
-              extensions={[".npy", ".ptu", ".pt3"]}
+              extensions={["npy", "ptu", "pt3"]}
               combine={true}
               onClickFile={async (f, ls) => {
                 let token = await getAccessTokenSilently();
 
                 if (
-                  (f.extensions?.includes(".pt3") ||
-                    f.extensions?.includes(".ptu")) &&
-                  !f.extensions?.includes(".npy")
+                  (f.extensions?.includes("pt3") ||
+                    f.extensions?.includes("ptu")) &&
+                  !f.extensions?.includes("npy")
                 ) {
                   setLoading(true);
                   let task = await convertPTFile(
                     token,
-                    f.name + (f.extensions.includes(".pt3") ? ".pt3" : ".ptu")
+                    f.name + (f.extensions.includes("pt3") ? "pt3" : "ptu")
                   );
                   let success = await waitForTaskSuccess(
                     token,
@@ -120,7 +120,7 @@ const Home = () => {
                   if (!success) return;
                   f.extensions.push(".npy");
                 }
-                if (f.extensions?.includes(".npy")) {
+                if (f.extensions?.includes("npy")) {
                   console.log("Setting active image", f.name);
                   console.log("PRELOADING");
                   dispatch(setChannel(0));

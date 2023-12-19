@@ -10,8 +10,15 @@ describe("Bucket file management API", () => {
     let [files, folders] = await loadBucketDirectory("abc", {
       bucket: "galatea",
     });
-    expect(files).toHaveLength(2);
+    expect(files).to.have.length(2);
     expect(files[0].name).equals("file1");
     expect(files[1].url).equals("http://file2");
+  });
+  it("Can create a new folder", async () => {
+    await createBucketFolder("abc", "galatea", "newfolder");
+  });
+  it("Can get an upload url", async () => {
+    let result = await getUploadURL("abc", "galatea", "a/b/c");
+    expect(result).to.equal("http://signeduploadurl");
   });
 });

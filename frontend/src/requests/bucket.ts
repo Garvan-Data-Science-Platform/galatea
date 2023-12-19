@@ -50,7 +50,7 @@ export async function getUploadURL(
   token: string,
   bucket: string,
   path: string
-) {
+): Promise<string> {
   let headers = { Authorization: `Bearer ${token}` };
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
   var url = `${backendURL}/bucket/${bucket}/upload?path=${path}`;
