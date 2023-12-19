@@ -15,19 +15,25 @@ const bucketList = {
 };
 
 export const restHandlers = [
-  rest.get("http://backend/bucket/galatea", (req, res, ctx) => {
+  rest.get("http://localhost:8000/bucket/galatea", (req, res, ctx) => {
     return res(ctx.status(200), ctx.json(bucketList));
   }),
-  rest.get("http://backend/bucket/galatea/upload", (req, res, ctx) => {
+  rest.get("http://localhost:8000/bucket/galatea/upload", (req, res, ctx) => {
     return res(ctx.status(200), ctx.json({ url: "http://signeduploadurl" }));
   }),
   rest.put(
-    "http://backend/bucket/galatea/folder?folderName=newfolder",
+    "http://localhost:8000/bucket/galatea/folder?folderName=newfolder",
     (req, res, ctx) => {
       return res(ctx.status(200));
     }
   ),
-  /*rest.put("http://signeduploadurl", (req, res, ctx) => {
+  rest.post("http://signeduploadurl", (req, res, ctx) => {
     return res(ctx.status(200), ctx.json({ status: "ok" }));
-  }),*/
+  }),
+  rest.delete(
+    "http://localhost:8000/bucket/galatea/folder",
+    (req, res, ctx) => {
+      return res(ctx.status(200), ctx.json({ status: "ok" }));
+    }
+  ),
 ];
