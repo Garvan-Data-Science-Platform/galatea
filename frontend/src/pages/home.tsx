@@ -108,7 +108,7 @@ const Home = () => {
                   setLoading(true);
                   let task = await convertPTFile(
                     token,
-                    f.name + (f.extensions.includes("pt3") ? "pt3" : "ptu")
+                    f.name + (f.extensions.includes("pt3") ? ".pt3" : ".ptu")
                   );
                   let success = await waitForTaskSuccess(
                     token,
