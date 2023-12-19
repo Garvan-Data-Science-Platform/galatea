@@ -118,7 +118,7 @@ const Home = () => {
                   );
                   setLoading(false);
                   if (!success) return;
-                  f.extensions.push(".npy");
+                  f.extensions.push("npy");
                 }
                 if (f.extensions?.includes("npy")) {
                   console.log("Setting active image", f.name);
