@@ -251,7 +251,6 @@ export function FrameView() {
         <Slider
           defaultValue={1}
           aria-label="Default"
-          valueLabelDisplay="auto"
           step={1}
           marks
           min={1}
