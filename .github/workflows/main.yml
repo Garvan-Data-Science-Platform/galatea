@@ -1,0 +1,124 @@
+name: build + dev release
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: "read"
+  id-token: "write"
+
+#Based on https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions
+#and https://cloud.google.com/blog/products/devops-sre/using-github-actions-with-google-cloud-deploy
+
+jobs:
+  build_test_deploy:
+    runs-on:
+      group: "Cabana-CICD"
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      #This step is for checking which files have changed
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/release.yml'
+            backend:
+              - 'backend/**'
+              - '.github/workflows/release.yml'
+
+      - name: Set SHA_SHORT
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: authenticate to google cloud
+        id: "auth"
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: "${{secrets.GCP_DEV_KEY}} | base64 -d"
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+        with:
+          project_id: "galatea-dev"
+
+      - name: "Docker auth"
+        run: gcloud auth configure-docker australia-southeast1-docker.pkg.dev
+
+      - uses: google-github-actions/get-gke-credentials@db150f2cc60d1716e61922b832eae71d2a45938f
+        with:
+          cluster_name: galatea-dev-gke-dev
+          location: australia-southeast1-a
+          project_id: galatea-dev
+          credentials: ${{secrets.GCP_DEV_KEY}} | base64 -d
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Set up creds
+        run: |
+          mkdir /tmp/secret-volume
+          echo "${{ secrets.GCP_KEY }}" | base64 -d > /tmp/secret-volume/sa-dev.json
+        shell: bash
+
+      - uses: isbang/compose-action@v1.4.1
+        with:
+          compose-file: ".github/docker-compose.ci.yml"
+          up-flags: "--build"
+        env:
+          AUTH0_DOMAIN: ${{secrets.AUTH0_DOMAIN}}
+          AUTH0_AUDIENCE: ${{secrets.AUTH0_AUDIENCE}}
+
+      - name: Run tests
+        run: |
+          mkdir /tmp/cypress; mkdir /tmp/cypress/videos; mkdir /tmp/logs
+          docker build . -f .github/Dockerfile.tests -t tests
+          docker run --network github_default -v /tmp/cypress/videos:/cypress/videos tests
+
+      - name: Print logs
+        if: always()
+        run: docker-compose -f .github/docker-compose.ci.yml logs
+
+      - name: Build and push Docker image - api
+        if: steps.filter.outputs.backend == 'true'
+        uses: docker/build-push-action@v3
+        with:
+          context: ./backend
+          file: ./backend/docker/Dockerfile
+          push: true
+          tags: |
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:latest
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:${{steps.vars.outputs.sha_short}}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image - worker
+        if: steps.filter.outputs.backend == 'true'
+        uses: docker/build-push-action@v3
+        with:
+          context: ./backend
+          file: ./backend/docker/Dockerfile.worker
+          push: true
+          tags: |
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:latest
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${{steps.vars.outputs.sha_short}}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      #Based on https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-google-kubernetes-engine
+      - name: Deploy frontend
+        if: steps.filter.outputs.frontend == 'true'
+        run: |-
+          yarn --cwd frontend install
+          yarn --cwd frontend build
+          gsutil -m rsync -r -c -d frontend/dist gs://galatea-dev-static-website-bucket-dev/
+
+      - name: Deploy backend
+        if: steps.filter.outputs.backend == 'true'
+        run: |-
+          kubectl set image deployment/api-dev api-dev="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:${{steps.vars.outputs.sha_short}}"
+          kubectl set image deployment/worker-dev worker-dev="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${{steps.vars.outputs.sha_short}}"
