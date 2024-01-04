@@ -71,35 +71,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push Docker image - worker
-        if: steps.filter.outputs.backend == 'true'
-        uses: docker/build-push-action@v3
-        with:
-          context: ./backend
-          file: ./backend/docker/Dockerfile.worker
-          push: true
-          tags: |
-            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${SHORT_SHA}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Deploy to dev env
-        run: |-
-          yarn --cwd frontend install
-          yarn --cwd frontend build
-          gsutil -m rsync -r -c -d frontend/dist gs://galatea-static-website-bucket-dev/
-          kubectl set image deployment/api-dev api-dev="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:${SHORT_SHA}"
-          kubectl set image deployment/worker-dev worker-dev="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${SHORT_SHA}"
-
-      - name: Save tag name to file
-        run: echo ${SHORT_SHA} > /tmp/tag
-
-      - name: Archive tag name
-        uses: actions/upload-artifact@v3
-        with:
-          name: current-tag
-          path: /tmp/tag
-
       - name: Print logs
         if: always()
         run: |

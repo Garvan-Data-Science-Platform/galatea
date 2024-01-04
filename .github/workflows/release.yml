@@ -29,6 +29,9 @@ jobs:
             backend:
               - 'backend/**'
 
+      - name: Add SHORT_SHA env property with commit short sha
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+
       - name: authenticate to google cloud
         id: "auth"
         uses: google-github-actions/auth@v1
@@ -85,7 +88,7 @@ jobs:
           push: true
           tags: |
             australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:latest
-            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:${{ github.sha }}
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:${SHORT_SHA}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -98,7 +101,7 @@ jobs:
           push: true
           tags: |
             australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:latest
-            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${{ github.sha }}
+            australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${SHORT_SHA}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -107,6 +110,6 @@ jobs:
         run: |-
           yarn --cwd frontend install
           yarn --cwd frontend build
-          gsutil -m rsync -r -c -d frontend/dist gs://galatea-static-website-bucket-prod/
-          kubectl rollout restart deployment/api
-          kubectl rollout restart deployment/worker
+          gsutil -m rsync -r -c -d frontend/dist gs://galatea-static-website-bucket-dev/
+          kubectl set image deployment/api-dev api-dev="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:${SHORT_SHA}"
+          kubectl set image deployment/worker-dev worker-dev="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${SHORT_SHA}"
