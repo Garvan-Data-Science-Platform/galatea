@@ -1,15 +1,15 @@
 resource "kubernetes_deployment" "worker" {
   metadata {
-    name = "worker"
+    name = "worker-${var.env}"
   }
 
-  depends_on = [google_container_node_pool.worker_nodes, helm_release.rabbitmq]
+  #depends_on = [google_container_node_pool.worker_nodes, helm_release.rabbitmq]
 
   spec {
     #replicas = 5
     selector {
       match_labels = {
-        App = "worker"
+        App = "worker-${var.env}"
       }
     }
     strategy {
@@ -18,7 +18,7 @@ resource "kubernetes_deployment" "worker" {
     template {
       metadata {
         labels = {
-          App = "worker"
+          App = "worker-${var.env}"
         }
       }
       spec {
@@ -36,19 +36,19 @@ resource "kubernetes_deployment" "worker" {
           }
         }
 
-        affinity {
-          node_affinity {
-            required_during_scheduling_ignored_during_execution {
-              node_selector_term {
-                match_expressions {
-                  key      = "type"
-                  operator = "In"
-                  values   = ["worker"]
-                }
-              }
-            }
-          }
-        }
+        #affinity {
+        #  node_affinity {
+        #    required_during_scheduling_ignored_during_execution {
+        #      node_selector_term {
+        #        match_expressions {
+        #          key      = "type"
+        #          operator = "In"
+        #          values   = ["worker"]
+        #        }
+        #      }
+        #    }
+        #  }
+        #}
         
         toleration {
           key = "workeronly"
@@ -58,7 +58,7 @@ resource "kubernetes_deployment" "worker" {
         termination_grace_period_seconds = 32400 #9hrs
         container {
           image = "australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker"
-          name  = "worker"
+          name  = "worker-${var.env}"
           port {
             container_port = 8000
           }
@@ -67,12 +67,12 @@ resource "kubernetes_deployment" "worker" {
           }
           env {
             name = "CELERY_BROKER_URL"
-            value = "pyamqp://user:${data.google_secret_manager_secret_version.rabbitmq_password.secret_data}@rabbitmq:5672//"
+            value = "pyamqp://user:${data.google_secret_manager_secret_version.rabbitmq_password.secret_data}@rabbitmq-${var.env}:5672//"
             #value = "redis://default:${data.google_secret_manager_secret_version.redis_password.secret_data}@redis-master:6379/0"
           }
           env {
             name = "CELERY_RESULT_BACKEND"
-            value = "redis://default:${data.google_secret_manager_secret_version.redis_password.secret_data}@redis-master:6379/0"
+            value = "redis://default:${data.google_secret_manager_secret_version.redis_password.secret_data}@redis-${var.env}-master:6379/0"
           }
           env {
             name = "BUCKET_NAME"
@@ -88,9 +88,9 @@ resource "kubernetes_deployment" "worker" {
             name = "worker-data"
             mount_path = "/data"
           }
-          resources {
-            limits = tomap({"nvidia.com/gpu" : 1})            
-          }
+          #resources {
+          #  limits = tomap({"nvidia.com/gpu" : 1})            
+          #}
         }
           
       }

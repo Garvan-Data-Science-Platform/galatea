@@ -1,6 +1,6 @@
 # GKE cluster
 resource "google_container_cluster" "primary" {
-  name     = "${var.project_id}-gke"
+  name     = "${var.project_id}-gke-${var.env}"
   location = var.location
   
   # We can't create a cluster with no node pool defined, but we want to only use
@@ -45,7 +45,7 @@ resource "google_container_node_pool" "primary_nodes" {
     }
   }
 }
-
+/*
 resource "google_container_node_pool" "worker_nodes" {
   name       = "worker-nodes"
   location   = var.location
@@ -89,6 +89,7 @@ resource "google_container_node_pool" "worker_nodes" {
     }
   }
 }
+*/
 /*
 resource "google_container_node_pool" "secondary_nodes" {
   name       = "secondary"

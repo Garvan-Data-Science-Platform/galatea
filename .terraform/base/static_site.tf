@@ -1,10 +1,15 @@
 resource "google_storage_bucket" "static-site" {
 
-  name          = "${var.subdomain}-static-website-bucket"
+  name          = "${var.subdomain}-static-website-bucket-${var.env}"
   location      = var.region
   force_destroy = true
 
   uniform_bucket_level_access = true
+
+  website {
+    main_page_suffix = "index.html"
+    not_found_page   = "404.html"
+  }
 
   cors {
     origin          = ["*"]
@@ -32,19 +37,19 @@ resource "google_storage_bucket_object" "indexpage" {
 }
 
 resource "google_compute_backend_bucket" "lb_backend" {
-  name        = "lb-backend-bucket"
+  name        = "lb-backend-bucket-${var.env}"
   description = "Backend bucket for load balancer"
   bucket_name = google_storage_bucket.static-site.name
   enable_cdn  = true
 }
 
 resource "google_compute_url_map" "default" {
-  name = "http-lb"
+  name = "http-lb-${var.env}"
   default_service = google_compute_backend_bucket.lb_backend.id
 }
 
 resource "google_compute_url_map" "redirect" {
-  name = "https-redirect"
+  name = "https-redirect-${var.env}"
   default_url_redirect {
     redirect_response_code = "MOVED_PERMANENTLY_DEFAULT"  // 301 redirect
     strip_query            = false
@@ -53,7 +58,7 @@ resource "google_compute_url_map" "redirect" {
 }
 
 resource "google_compute_target_http_proxy" "default" {
-  name    = "http-lb-proxy"
+  name    = "http-lb-proxy-${var.env}"
   url_map = google_compute_url_map.redirect.id
 }
 
@@ -68,21 +73,22 @@ resource "google_compute_managed_ssl_certificate" "frontend" {
 }
 
 resource "google_compute_target_https_proxy" "default" {
-  name             = "ssl-proxy"
+  name             = "ssl-proxy-${var.env}"
   url_map = google_compute_url_map.default.id
   ssl_certificates = [google_compute_managed_ssl_certificate.frontend.id]
 }
 
 resource "google_compute_global_address" "frontend" {
-  name = "ipv4-address-frontend"
+  name = "ipv4-address-frontend-${var.env}"
 }
 
 data "google_compute_global_address" "frontend" {
-  name = "ipv4-address-frontend"
+  depends_on=[google_compute_global_address.frontend]
+  name = "ipv4-address-frontend-${var.env}"
 }
 
 resource "google_compute_global_forwarding_rule" "default" {
-  name                  = "http-lb-forwarding-rule"
+  name                  = "http-lb-forwarding-rule-${var.env}"
   ip_protocol           = "TCP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   port_range            = "80"
@@ -91,7 +97,7 @@ resource "google_compute_global_forwarding_rule" "default" {
 }
 
 resource "google_compute_global_forwarding_rule" "ssl" {
-  name                  = "https-lb-forwarding-rule"
+  name                  = "https-lb-forwarding-rule-${var.env}"
   ip_protocol           = "TCP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   port_range            = "443"
