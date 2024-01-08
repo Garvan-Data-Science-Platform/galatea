@@ -43,5 +43,5 @@ jobs:
 
       - name: Deploy backend
         run: |-
-          kubectl set image deployment/api-prod api-prod="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:${{steps.vars.outputs.sha_short}}"
-          kubectl set image deployment/worker-prod worker-prod="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${{steps.vars.outputs.sha_short}}"
+          kubectl set image deployment/api-prod api-prod="australia-southeast1-docker.pkg.dev/dsp-registry-410602/docker/galatea-api:${{steps.vars.outputs.sha_short}}"
+          kubectl set image deployment/worker-prod worker-prod="australia-southeast1-docker.pkg.dev/dsp-registry-410602/docker/galatea-worker:${{steps.vars.outputs.sha_short}}"
