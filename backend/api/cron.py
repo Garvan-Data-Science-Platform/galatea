@@ -9,6 +9,7 @@ def shutdown_worker():
     import requests
     import datetime
     FLOWER_CONN = os.getenv("FLOWER_CONN")
+    NODE_NAME = os.getenv("NODE_NAME")
 
     r = requests.get(FLOWER_CONN + "/api/workers?refresh=true&status=true")
     workers = r.json()
@@ -42,7 +43,7 @@ def shutdown_worker():
 
         request = container_v1.SetNodePoolSizeRequest(
             node_count=0,
-            name="projects/galatea-396601/locations/australia-southeast1-a/clusters/galatea-396601-gke/nodePools/worker-nodes"
+            name=NODE_NAME
         )
 
     client.set_node_pool_size(request=request)

@@ -36,19 +36,19 @@ resource "kubernetes_deployment" "worker" {
           }
         }
 
-        #affinity {
-        #  node_affinity {
-        #    required_during_scheduling_ignored_during_execution {
-        #      node_selector_term {
-        #        match_expressions {
-        #          key      = "type"
-        #          operator = "In"
-        #          values   = ["worker"]
-        #        }
-        #      }
-        #    }
-        #  }
-        #}
+        affinity {
+          node_affinity {
+            required_during_scheduling_ignored_during_execution {
+              node_selector_term {
+                match_expressions {
+                  key      = "type"
+                  operator = "In"
+                  values   = ["worker"]
+                }
+              }
+            }
+          }
+        }
         
         toleration {
           key = "workeronly"
@@ -88,9 +88,9 @@ resource "kubernetes_deployment" "worker" {
             name = "worker-data"
             mount_path = "/data"
           }
-          #resources {
-          #  limits = tomap({"nvidia.com/gpu" : 1})            
-          #}
+          resources {
+            limits = tomap({"nvidia.com/gpu" : 1})            
+          }
         }
           
       }

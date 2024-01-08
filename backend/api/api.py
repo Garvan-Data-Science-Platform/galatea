@@ -43,7 +43,7 @@ class NumpyRenderer(BaseRenderer):
 api = NinjaAPI(renderer=NumpyRenderer())
 
 BUCKET_FOLDER = 'bucket'
-
+NODE_NAME = os.getenv("NODE_NAME")
 
 if os.getenv('DEV') == 'true':
     def mock_perm(*args, **kwargs):
@@ -172,7 +172,7 @@ def down(request):
     # Initialize request argument(s)
     request = container_v1.SetNodePoolSizeRequest(
         node_count=0,
-        name="projects/galatea-396601/locations/australia-southeast1-a/clusters/galatea-396601-gke/nodePools/worker-nodes"
+        name=NODE_NAME
     )
 
     # Make the request
@@ -195,7 +195,7 @@ def up(request):
 
     request = container_v1.SetNodePoolSizeRequest(
         node_count=1,
-        name="projects/galatea-396601/locations/australia-southeast1-a/clusters/galatea-396601-gke/nodePools/worker-nodes"
+        name=NODE_NAME
     )
 
     # Make the request
@@ -253,7 +253,7 @@ def size(request):
 
     # Make the request
     response = client.get_cluster(
-        name="projects/galatea-396601/locations/australia-southeast1-a/clusters/galatea-396601-gke/")
+        name=NODE_NAME)
 
     # Handle the response
     print(response.current_node_count)

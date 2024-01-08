@@ -45,7 +45,7 @@ resource "google_container_node_pool" "primary_nodes" {
     }
   }
 }
-/*
+
 resource "google_container_node_pool" "worker_nodes" {
   name       = "worker-nodes"
   location   = var.location
@@ -81,7 +81,7 @@ resource "google_container_node_pool" "worker_nodes" {
     service_account = var.sa_email
 
     # preemptible  = true
-    machine_type = "n1-highmem-8"
+    machine_type = "n1-standard-16"
     disk_size_gb = 300
     tags         = ["gke-node", "${var.project_id}-gke", "worker"]
     metadata = {
@@ -89,7 +89,7 @@ resource "google_container_node_pool" "worker_nodes" {
     }
   }
 }
-*/
+
 /*
 resource "google_container_node_pool" "secondary_nodes" {
   name       = "secondary"

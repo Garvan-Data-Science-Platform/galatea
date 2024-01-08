@@ -106,6 +106,10 @@ resource "kubernetes_deployment" "api" {
             name = "FLOWER_PASSWORD"
             value = data.google_secret_manager_secret_version.flower_password.secret_data
           } 
+          env {
+            name = "NODE_NAME"
+            value = "projects/${var.project_id}/locations/${var.location}/clusters/${google_container_cluster.primary.name}/nodePools/worker-nodes"
+          }
           volume_mount  {
               name = "secret-volume"
               mount_path = "/etc/secret-volume"
