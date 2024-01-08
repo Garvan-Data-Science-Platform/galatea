@@ -19,18 +19,6 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
-      #This step is for checking which files have changed
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            frontend:
-              - 'frontend/**'
-              - '.github/workflows/release.yml'
-            backend:
-              - 'backend/**'
-              - '.github/workflows/release.yml'
-
       - name: Set SHA_SHORT
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -84,7 +72,6 @@ jobs:
         run: docker-compose -f .github/docker-compose.ci.yml logs
 
       - name: Build and push Docker image - api
-        if: steps.filter.outputs.backend == 'true'
         uses: docker/build-push-action@v3
         with:
           context: ./backend
@@ -97,7 +84,6 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image - worker
-        if: steps.filter.outputs.backend == 'true'
         uses: docker/build-push-action@v3
         with:
           context: ./backend
@@ -111,14 +97,12 @@ jobs:
 
       #Based on https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-google-kubernetes-engine
       - name: Deploy frontend
-        if: steps.filter.outputs.frontend == 'true'
         run: |-
           yarn --cwd frontend install
           yarn --cwd frontend build
           gsutil -m rsync -r -c -d frontend/dist gs://galatea-dev-static-website-bucket-dev/
 
       - name: Deploy backend
-        if: steps.filter.outputs.backend == 'true'
         run: |-
           kubectl set image deployment/api-dev api-dev="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api:${{steps.vars.outputs.sha_short}}"
           kubectl set image deployment/worker-dev worker-dev="australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker:${{steps.vars.outputs.sha_short}}"
