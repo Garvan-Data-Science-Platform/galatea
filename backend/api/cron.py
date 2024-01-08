@@ -34,9 +34,9 @@ def shutdown_worker():
     if latest_task:  # If latest task is finished, check how long since it finished
         task = list(latest_task.values())[0]
         if task['state'] in ["FAILURE", "SUCCESS"]:
-            time = (datetime.datetime.utcnow().timestamp() - task['timestamp'])/3600
+            time = datetime.datetime.utcnow().timestamp() - task['timestamp']
 
-    if time > 2:  # 2 hours
+    if time > 7200 or not latest_task:  # 2 hours
         print("SHUTTING DOWN WORKER")
         client = container_v1.ClusterManagerClient.from_service_account_file(
             "/etc/secret-volume/sa-key.json")
@@ -46,7 +46,7 @@ def shutdown_worker():
             name=NODE_NAME
         )
 
-    client.set_node_pool_size(request=request)
+        client.set_node_pool_size(request=request)
 
 
 def shutdown_worker_dev():
