@@ -57,7 +57,7 @@ resource "kubernetes_deployment" "worker" {
 
         termination_grace_period_seconds = 32400 #9hrs
         container {
-          image = "australia-southeast1-docker.pkg.dev/galatea-396601/galatea/worker"
+          image = "australia-southeast1-docker.pkg.dev/dsp-registry-410602/docker/galatea-worker:latest"
           name  = "worker-${var.env}"
           port {
             container_port = 8000

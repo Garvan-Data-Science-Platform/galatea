@@ -29,7 +29,7 @@ resource "kubernetes_deployment" "api" {
           }
         }
         container {
-          image = "australia-southeast1-docker.pkg.dev/galatea-396601/galatea/api"
+          image = "australia-southeast1-docker.pkg.dev/dsp-registry-410602/docker/galatea-api:latest"
           name  = "api-${var.env}"
           port {
             container_port = 8000
@@ -115,16 +115,11 @@ resource "kubernetes_deployment" "api" {
               mount_path = "/etc/secret-volume"
               read_only = true
           }
-          resources {
-            requests = {
-              cpu    = "0.5"
-              memory = "0.5Gi"
-            }
-          }
         }
           
       }
     }
+
   }
 }
 
