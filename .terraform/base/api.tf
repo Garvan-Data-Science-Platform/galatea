@@ -115,6 +115,12 @@ resource "kubernetes_deployment" "api" {
               mount_path = "/etc/secret-volume"
               read_only = true
           }
+          resources {
+            requests = {
+              cpu    = "0.1"
+              memory = "0.5Gi"
+            }
+          }
         }
           
       }
