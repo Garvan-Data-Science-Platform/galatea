@@ -76,8 +76,8 @@ resource "kubernetes_deployment" "worker" {
           }
           env {
             name = "BUCKET_NAME"
-            value = "galatea"
-          }          
+            value = google_storage_bucket.data.name
+          }
 
           volume_mount  {
               name = "secret-volume"

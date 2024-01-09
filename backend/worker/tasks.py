@@ -15,7 +15,7 @@ app.conf.result_serializer = 'pickle'
 app.conf.accept_content = ['pickle', 'json']
 
 
-BUCKET_NAME = 'galatea'
+BUCKET_NAME = os.getenv('BUCKET_NAME','galatea')
 
 flim_ds = '/app/bucket/test_flim.npy'
 BUCKET_FOLDER = 'bucket'

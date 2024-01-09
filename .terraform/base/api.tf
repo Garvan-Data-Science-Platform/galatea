@@ -110,6 +110,10 @@ resource "kubernetes_deployment" "api" {
             name = "NODE_NAME"
             value = "projects/${var.project_id}/locations/${var.location}/clusters/${google_container_cluster.primary.name}/nodePools/worker-nodes"
           }
+          env {
+            name = "BUCKET_NAME"
+            value = google_storage_bucket.data.name
+          }
           volume_mount  {
               name = "secret-volume"
               mount_path = "/etc/secret-volume"
