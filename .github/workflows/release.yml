@@ -39,7 +39,7 @@ jobs:
         run: |-
           yarn --cwd frontend install
           yarn --cwd frontend build
-          gsutil -m rsync -r -c -d frontend/dist gs://galatea-static-website-bucket/
+          gsutil -m rsync -r -c -d frontend/dist gs://galatea-static-website-bucket-prod/
 
       - name: Deploy backend
         run: |-
