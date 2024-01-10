@@ -44,6 +44,7 @@ api = NinjaAPI(renderer=NumpyRenderer())
 
 BUCKET_FOLDER = 'bucket'
 NODE_NAME = os.getenv("NODE_NAME")
+BUCKET_NAME = os.getenv("BUCKET_NAME","galatea")
 
 if os.getenv('DEV') == 'true':
     def mock_perm(*args, **kwargs):
@@ -284,10 +285,9 @@ def test_upload(request, file: UploadedFile):
     with open(f'/app/{BUCKET_FOLDER}/{file.name}', 'wb') as f:
         f.write(file.read())
 
-
-@api.get("/bucket/{bucket}/", response=BucketFileList, auth=AuthBearer())
+@api.get("/bucket", response=BucketFileList, auth=AuthBearer())
 @permission_required("api.access", raise_exception=True)
-def list_bucket(request, bucket: str, subdir: str | None = None, limit: int | None = None):
+def list_bucket(request, subdir: str | None = None, limit: int | None = None):
     if subdir:
         prefix = subdir + "/"
     else:
@@ -296,7 +296,7 @@ def list_bucket(request, bucket: str, subdir: str | None = None, limit: int | No
     if limit is None:
         limit = -1
 
-    results = storage_client.list_blobs(bucket, delimiter="/", prefix=prefix)
+    results = storage_client.list_blobs(BUCKET_NAME, delimiter="/", prefix=prefix)
     blobs = [r for i, r in enumerate(results) if i < limit and r.name != str(subdir) + '/']
     files = [{'name': b.name, 'url': b.generate_signed_url(version='v4', expiration=datetime.timedelta(minutes=15), method='GET')} for b in blobs]
     folders: List[str] = list(results.prefixes)
@@ -306,12 +306,12 @@ def list_bucket(request, bucket: str, subdir: str | None = None, limit: int | No
     return {"files": files, "folders": folders}
 
 
-@api.put("/bucket/{bucket}/folder", auth=AuthBearer())
+@api.put("/bucket", auth=AuthBearer())
 @permission_required("api.access", raise_exception=True)
-def create_folder(request, bucket: str, folderName: str):
+def create_folder(request, folderName: str):
     """Create new folder in bucket"""
 
-    bucket = storage_client.get_bucket(bucket)
+    bucket = storage_client.get_bucket(BUCKET_NAME)
     if folderName[-1] != '/':
         folderName = folderName + '/'
     blob = bucket.blob(folderName)
@@ -320,12 +320,12 @@ def create_folder(request, bucket: str, folderName: str):
     return {"status": "ok"}
 
 
-@api.delete("/bucket/{bucket}/folder", auth=AuthBearer())
+@api.delete("/bucket/folder", auth=AuthBearer())
 @permission_required("api.access", raise_exception=True)
-def delete_folder(request, bucket: str, folderName: str):
+def delete_folder(request, folderName: str):
     """Delete a folder from the bucket"""
 
-    bucket = storage_client.get_bucket(bucket)
+    bucket = storage_client.get_bucket(BUCKET_NAME)
     blobs = bucket.list_blobs(prefix=folderName)
     for b in blobs:
         b.delete()
@@ -333,15 +333,15 @@ def delete_folder(request, bucket: str, folderName: str):
     return {"status": "ok"}
 
 
-@api.get("/bucket/{bucket}/upload", auth=AuthBearer())
+@api.get("/bucket/upload", auth=AuthBearer())
 @permission_required("api.access", raise_exception=True)
-def get_upload_url(request, bucket: str, path: str):
+def get_upload_url(request, path: str):
     """Get a signed upload URL"""
 
     if os.getenv("DEV") == 'true':
         return {"url": request.build_absolute_uri('/test-upload')}
 
-    bucket = storage_client.get_bucket(bucket)
+    bucket = storage_client.get_bucket(BUCKET_NAME)
     blob = bucket.blob(path)
     url = blob.generate_signed_url(
         version="v4",

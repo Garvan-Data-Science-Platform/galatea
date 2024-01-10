@@ -1,7 +1,6 @@
 import { BucketFile } from "components/FileBrowser/Subdirectory";
 
 interface loadBucketDirectoryProps {
-  bucket: string;
   subdir?: string;
   limit?: number;
 }
@@ -12,7 +11,7 @@ export async function loadBucketDirectory(
 ): Promise<[BucketFile[], string[]]> {
   let headers = { Authorization: `Bearer ${token}` };
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
-  var url = `${backendURL}/bucket/${props.bucket}?limit=${props.limit}`;
+  var url = `${backendURL}/bucket?limit=${props.limit}`;
 
   if (props.subdir) {
     url = url.concat("&subdir=", props.subdir);
@@ -30,14 +29,10 @@ export async function loadBucketDirectory(
   return [files, folders];
 }
 
-export async function createBucketFolder(
-  token: string,
-  bucket: string,
-  folderName: string
-) {
+export async function createBucketFolder(token: string, folderName: string) {
   let headers = { Authorization: `Bearer ${token}` };
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
-  var url = `${backendURL}/bucket/${bucket}/folder?folderName=${folderName}`;
+  var url = `${backendURL}/bucket/folder?folderName=${folderName}`;
 
   let res = await fetch(url, { headers, method: "put" });
   if (!res.ok) {
@@ -48,12 +43,11 @@ export async function createBucketFolder(
 
 export async function getUploadURL(
   token: string,
-  bucket: string,
   path: string
 ): Promise<string> {
   let headers = { Authorization: `Bearer ${token}` };
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
-  var url = `${backendURL}/bucket/${bucket}/upload?path=${path}`;
+  var url = `${backendURL}/bucket/upload?path=${path}`;
 
   let res = await fetch(url, { headers, method: "get" });
   if (!res.ok) {
@@ -63,14 +57,10 @@ export async function getUploadURL(
   return dat.url;
 }
 
-export async function deleteBucketFolder(
-  token: string,
-  bucket: string,
-  folderName: string
-) {
+export async function deleteBucketFolder(token: string, folderName: string) {
   let headers = { Authorization: `Bearer ${token}` };
   let backendURL = import.meta.env["VITE_BACKEND_URL"];
-  var url = `${backendURL}/bucket/${bucket}/folder?folderName=${folderName}`;
+  var url = `${backendURL}/bucket/folder?folderName=${folderName}`;
 
   let res = await fetch(url, { headers, method: "delete" });
   if (!res.ok) {

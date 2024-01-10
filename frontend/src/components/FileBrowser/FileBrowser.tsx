@@ -78,7 +78,7 @@ function FileBrowser(props: FileBrowserProps) {
     let file = event.target.files[0];
     let path =
       selectedFolder != "" ? selectedFolder + "/" + file.name : file.name;
-    let url = await getUploadURL(token, "galatea", path);
+    let url = await getUploadURL(token, path);
     console.log("URL", url);
     let formData = new FormData();
     formData.append("file", file);
@@ -116,7 +116,6 @@ function FileBrowser(props: FileBrowserProps) {
     let token = await getAccessTokenSilently();
     await createBucketFolder(
       token,
-      "galatea",
       selectedFolder != ""
         ? selectedFolder + "/" + newFolderName
         : newFolderName
@@ -127,7 +126,7 @@ function FileBrowser(props: FileBrowserProps) {
   const deleteSelected = async () => {
     let token = await getAccessTokenSilently();
     for (var i in selected) {
-      await deleteBucketFolder(token, "galatea", selected[i]);
+      await deleteBucketFolder(token, selected[i]);
     }
     dispatch(clearSelected());
     setKey(Math.random()); //Reload tree

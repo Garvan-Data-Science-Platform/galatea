@@ -108,7 +108,6 @@ export function Subdirectory(props: SubdirectoryProps) {
     var files, folders;
     try {
       [files, folders] = await loadBucketDirectory(token, {
-        bucket: props.bucket,
         subdir: folderString,
         limit: 50,
       });
