@@ -99,7 +99,7 @@ jobs:
       - name: Deploy frontend
         run: |-
           yarn --cwd frontend install
-          yarn --cwd frontend build
+          yarn --cwd frontend run vite build --mode staging
           gsutil -m rsync -r -c -d frontend/dist gs://galatea-dev-static-website-bucket-dev/
 
       - name: Deploy backend
