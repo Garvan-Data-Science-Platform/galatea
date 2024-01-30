@@ -349,7 +349,7 @@ def get_upload_url(request, path: str):
         expiration=datetime.timedelta(minutes=15),
         # Allow PUT requests using this URL.
         method="PUT",
-        content_type="application/octet-stream",
+        #content_type="application/octet-stream",
     )
 
     return {"url": url}
