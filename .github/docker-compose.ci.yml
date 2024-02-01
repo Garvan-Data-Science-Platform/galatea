@@ -47,13 +47,13 @@ services:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: redis://redis/0
       BUCKET_NAME: galatea
-      HOSTNAME: http://localhost
-      TEST_ENV: "yes"
+      AUTH0_DOMAIN: dev-xedas2iasb2dv6bb.us.auth0.com
+      AUTH0_AUDIENCE: https://galatea-backend/
+      #TEST_ENV: "yes"
+      DEV: "true"
       PYTHONUNBUFFERED: "TRUE"
-      FLOWER_HOSTNAME: flower
-      FLOWER_PASSWORD: testpassword
       DJANGO_SETTINGS_MODULE: "galatea.settings"
     ports:
       - 8000:8000
     command:
-      - "/app/docker/entrypoint.sh"
+      - "/app/docker/entrypoint-dev.sh"

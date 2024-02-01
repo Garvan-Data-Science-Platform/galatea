@@ -65,7 +65,7 @@ jobs:
         run: |
           mkdir /tmp/cypress; mkdir /tmp/cypress/videos; mkdir /tmp/logs
           docker build . -f .github/Dockerfile.tests -t tests
-          docker run --network github_default --hostname testcontainer -v /tmp/cypress/videos:/cypress/videos tests
+          docker run --network github_default -v /tmp/cypress/videos:/cypress/videos tests
 
       - name: Print logs
         if: always()
