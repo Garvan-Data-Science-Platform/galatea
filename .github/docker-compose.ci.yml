@@ -14,12 +14,13 @@ services:
       - /tmp/secret-volume:/etc/secret-volume
     privileged: true
     #entrypoint: celery
-    command: ./docker/entrypoint-worker.sh
+    command: ./docker/entrypoint-worker-dev.sh
     environment:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: redis://redis/0
       BUCKET_NAME: galatea
       #PYTHONPATH: /data
+      DEV: "true"
     depends_on:
       - redis
       - app
