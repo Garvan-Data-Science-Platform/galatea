@@ -33,6 +33,9 @@ services:
     environment:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: redis://redis/0
+      FLOWER_UNAUTHENTICATED_API: true
+    volumes:
+      - /tmp/secret-volume:/etc/secret-volume
     depends_on:
       - worker
       - redis
