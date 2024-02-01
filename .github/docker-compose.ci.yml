@@ -12,6 +12,7 @@ services:
       dockerfile: ../backend/docker/Dockerfile.worker
     volumes:
       - /tmp/secret-volume:/etc/secret-volume
+      - /tmp/working:/app/working
     privileged: true
     #entrypoint: celery
     command: ./docker/entrypoint-worker-dev.sh
