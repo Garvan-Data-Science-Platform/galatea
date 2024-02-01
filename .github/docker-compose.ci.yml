@@ -13,6 +13,7 @@ services:
     volumes:
       - /tmp/secret-volume:/etc/secret-volume
       - /tmp/working:/app/working
+      - /tmp/working:/data
     privileged: true
     #entrypoint: celery
     command: ./docker/entrypoint-worker-dev.sh
