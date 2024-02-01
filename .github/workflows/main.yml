@@ -50,6 +50,7 @@ jobs:
       - name: Set up creds
         run: |
           mkdir /tmp/secret-volume
+          mkdir /tmp/working
           echo "${{ secrets.GCP_KEY }}" | base64 -d > /tmp/secret-volume/sa-key.json
         shell: bash
 

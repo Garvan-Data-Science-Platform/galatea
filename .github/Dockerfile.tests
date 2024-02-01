@@ -17,8 +17,6 @@ COPY .github/run_tests.sh run_tests.sh
 
 COPY backend backend
 
-RUN mkdir /app/working
-
 ENV CYPRESS_BASE_URL="http://localhost:5173"
 
 ENTRYPOINT [ "./run_tests.sh" ]

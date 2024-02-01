@@ -45,6 +45,7 @@ services:
       dockerfile: ../backend/docker/Dockerfile
     volumes:
       - /tmp/secret-volume:/etc/secret-volume
+      - /tmp/working:/app/working
     privileged: true
     environment:
       CELERY_BROKER_URL: redis://redis
