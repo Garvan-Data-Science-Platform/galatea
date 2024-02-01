@@ -17,6 +17,6 @@ COPY .github/run_tests.sh run_tests.sh
 
 COPY backend backend
 
-ENV CYPRESS_BASE_URL="http://app:5173"
+ENV CYPRESS_BASE_URL="http://testcontainer:5173"
 
 ENTRYPOINT [ "./run_tests.sh" ]
